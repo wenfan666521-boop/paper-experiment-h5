@@ -1,119 +1,111 @@
 # Paper Experiment H5
 
-## 📖 项目简介
+## 论文实验配套H5 | AI交互风格 × 服务场景 | 2×2混合设计
 
-毕业论文实验配套 H5：**AI交互风格 × 服务场景 对用户支付意愿的影响**
+**部署方案**：Cloudflare Workers（API）+ Cloudflare Pages（H5）
 
-- **设计**：2(场景，被试间) × 2(AI风格，被试内) 混合实验
-- **场景**：体验式（家庭度假）/ 功利式（商务出差）
-- **AI风格**：体验导向AI（星程）/ 功利导向AI（出行助手）
-- **部署**：GitHub Pages（H5前端）+ Vercel（API代理）
-- **数据**：飞书表格
+---
 
-## 📁 项目结构
+## 技术架构
 
 ```
-paper-experiment-h5/
-├── public/                  # H5 静态页面（→ GitHub Pages）
-│   ├── index.html          # 入口
-│   ├── consent.html        # 知情同意
-│   ├── demographics.html   # 人口学信息
-│   ├── scenario.html       # 场景启动
-│   ├── scenario-mc.html    # 场景操控检验
-│   ├── chat.html           # 对话核心页
-│   ├── survey.html         # 量表评价
-│   ├── thanks.html         # 致谢
+Cloudflare Pages（H5页面）
+    ↓
+Cloudflare Workers（统一入口，按路由分发）
+    ↓
+百炼AI（体验/功利两套）+ 飞书表格（数据存储）
+```
+
+---
+
+## 项目结构
+
+```
+├── public/                   # H5 页面（→ Cloudflare Pages）
+│   ├── index.html           # 入口
+│   ├── consent.html         # 知情同意
+│   ├── demographics.html     # 人口学信息
+│   ├── scenario.html        # 场景启动（10秒阅读）
+│   ├── scenario-mc.html     # 场景操控检验
+│   ├── chat.html            # 对话核心页（≥5轮）
+│   ├── survey.html           # 量表评价
+│   ├── thanks.html          # 致谢+任务码
 │   └── assets/
-│       ├── state.js       # 全局状态
+│       ├── api.js           # API调用（改BASE指向你的Workers URL）
+│       ├── state.js        # 全局状态
 │       ├── scenarios.js    # 场景材料
-│       ├── survey-data.js # 量表配置
-│       ├── api.js         # API调用
+│       ├── survey-data.js   # 量表配置
 │       └── style.css
-├── api/                     # Vercel Serverless（→ Vercel）
-│   ├── chat.js             # 百炼对话代理
-│   ├── log-message.js      # 实时记录对话到飞书
-│   └── submit-survey.js    # 提交量表到飞书
-├── docs/
-│   ├── flow.md             # 实验流程图
-│   └── feishu-schema.md    # 飞书表格结构
-└── vercel.json
+├── workers/
+│   └── [chat].js           # Cloudflare Worker（统一入口）
+└── docs/
+    ├── cloudflare-deploy.md # Cloudflare部署详细指南
+    ├── feishu-schema.md     # 飞书表格结构
+    └── flow.md              # 实验流程图
 ```
 
-## 🚀 实验流程
+---
+
+## 实验流程
 
 ```
 欢迎页 → 知情同意 → 人口学信息
-   ↓
+    ↓
 随机分配【场景】（体验式 OR 功利式）
-   ↓
-场景启动（10秒强制阅读）→ 场景操控检验
-   ↓
-随机【AI顺序】（A→B OR B→A）
-   ┌─ AI助手1 真实对话（≥5轮）→ 量表评价
-   └─ AI助手2 真实对话（≥5轮）→ 量表评价
-   ↓
+    ↓
+场景启动（10秒强制阅读）→ 场景操控检验（3题）
+    ↓
+随机【AI顺序】（A先B后 OR B先A后）
+    ┌─ AI助手1 对话（≥5轮）→ 量表评价
+    └─ AI助手2 对话（≥5轮）→ 量表评价
+    ↓
 致谢 + 任务码
 ```
 
-## 🛠️ 部署步骤
+---
 
-### Step 1：部署 H5 前端到 GitHub Pages
+## 部署指南
 
-1. Fork 或直接推送本仓库到 GitHub
-2. 在 GitHub 仓库 → Settings → Pages → Source: `main` branch `/ (root)`
-3. 等待部署（约2分钟），获得地址如 `https://wenfan666521-boop.github.io/paper-experiment-h5/`
+详见 `docs/cloudflare-deploy.md`
 
-### Step 2：部署 API 到 Vercel（免费）
+### 快速步骤
 
-1. 登录 [vercel.com](https://vercel.com)，Import 本仓库
-2. 在 Vercel Project Settings → Environment Variables 设置以下变量：
+**Workers（API）**：
+1. Cloudflare Dashboard → Workers & Pages → Create Worker
+2. 上传 `workers/[chat].js` 代码
+3. Settings → Variables 添加所有环境变量
+4. Triggers → Routes 绑定：`api.aowuaowu2026.xyz`（或你的域名）
 
-| 变量名 | 说明 |
+**Pages（H5）**：
+1. Workers & Pages → Create application → Pages → Connect to Git
+2. 选择本仓库，Output directory: `public`
+3. 添加自定义域名（如 `paper.aowuaowu2026.xyz`）
+
+---
+
+## 环境变量（Workers）
+
+| 变量名 | 值 |
 |---|---|
-| `BAILIAN_APP_ID_EXP` | 体验导向AI（星程）的 APP ID |
-| `BAILIAN_API_KEY_EXP` | 体验导向AI 的 API Key |
-| `BAILIAN_APP_ID_UTIL` | 功利导向AI 的 APP ID |
-| `BAILIAN_API_KEY_UTIL` | 功利导向AI 的 API Key |
-| `FEISHU_APP_ID` | 飞书自建应用 App ID |
-| `FEISHU_APP_SECRET` | 飞书自建应用 App Secret |
-| `FEISHU_SHEET_TOKEN` | 飞书表格 Token |
+| `BAILIAN_APP_ID_EXP` | `467708a331474605b5d30d999417edd0` |
+| `BAILIAN_API_KEY_EXP` | `sk-41e…c482` |
+| `BAILIAN_APP_ID_UTIL` | `7f59b8a020ff4311a376f0a685f1024d` |
+| `BAILIAN_API_KEY_UTIL` | `sk-41e…c482` |
+| `FEISHU_APP_ID` | `cli_a92b1db5a7f89bc4` |
+| `FEISHU_APP_SECRET` | （飞书开发者后台获取） |
+| `FEISHU_SHEET_TOKEN` | `LkoJsvZ0Ohxl6ctvDkFcEU0YnCh` |
 
-3. Deploy → 获得 API 地址如 `https://paper-experiment-h5.vercel.app/api/`
-4. 修改 `public/assets/api.js` 中的 `BASE` 指向你的 Vercel API 地址
+---
 
-### Step 3：创建飞书表格
+## 飞书表格
 
-1. 新建飞书表格，命名如「论文实验数据」
-2. 创建3个 Sheet：
-   - `participants`（字段参考 `docs/feishu-schema.md`）
-   - `chat_logs`
-   - `survey_responses`
-3. 将表格 Token（URL 中 `/sheets/` 到 `/` 之间的字符）填入 `FEISHU_SHEET_TOKEN`
-4. 在飞书自建应用管理后台，开通「获取与更新电子表格内容」权限
+**Token**: `LkoJsvZ0Ohxl6ctvDkFcEU0YnCh`
+**地址**: https://xcn6gvimkp72.feishu.cn/sheets/LkoJsvZ0Ohxl6ctvDkFcEU0YnCh
 
-## 🔧 本地开发
+包含3个Sheet：participants（11列）/ chat_logs（8列）/ survey_responses（39列）
 
-```bash
-# H5前端（mock模式，无需配置任何凭证）
-cd public && python3 -m http.server 8000
-# 访问 http://localhost:8000
+---
 
-# API本地调试（需要配置.env）
-vercel dev
-```
-
-## 📊 数据流程
-
-1. 每条对话消息 → `/api/log-message` → 实时写入飞书 `chat_logs` 表
-2. 完成后所有数据 → `/api/submit-survey` → 写入飞书 `participants` + `survey_responses` 表
-3. `thanks.html` 显示任务码，用户凭此码在 Credamo 兑换奖励
-
-## ⚠️ 重要说明
-
-- 支付意愿滑块范围：**¥0 - ¥30**
-- 对话结束条件：最少 **5轮** 用户消息后可点「完成对话」
-- 被试ID 由前端 UUID 生成，无需收集任何个人信息
-
-## 📝 License
+## License
 
 仅供学术研究使用 © 2026
