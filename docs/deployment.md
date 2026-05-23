@@ -8,9 +8,19 @@
 | `BAILIAN_APP_ID_UTIL` | `7f59b8a020ff4311a376f0a685f1024d` |
 | `BAILIAN_API_KEY_EXP` | `sk-41ec25d4bc7246b39f1706750dcac482` |
 | `BAILIAN_API_KEY_UTIL` | `sk-41ec25d4bc7246b39f1706750dcac482` |
-| `FEISHU_APP_ID` | （待补充） |
-| `FEISHU_APP_SECRET` | （待补充） |
-| `FEISHU_SHEET_TOKEN` | （待补充） |
+| `FEISHU_APP_ID` | `cli_a92b1db5a7f89bc4` |
+| `FEISHU_APP_SECRET` | （系统keychain已存，可通过lark-cli认证获取）|
+| `FEISHU_SHEET_TOKEN` | `LkoJsvZ0Ohxl6ctvDkFcEU0YnCh` |
+
+## 飞书表格
+
+**已创建好，地址**：
+https://xcn6gvimkp72.feishu.cn/sheets/LkoJsvZ0Ohxl6ctvDkFcEU0YnCh
+
+包含3个Sheet：
+- `participants`（11列，已写好表头）
+- `chat_logs`（8列，已写好表头）
+- `survey_responses`（39列，已写好表头）
 
 ## Vercel 部署步骤
 
@@ -20,28 +30,16 @@
 ### Step 2：配置环境变量
 在 Vercel → Project Settings → Environment Variables 添加上表所有变量。
 
+> ⚠️ 注意：`FEISHU_APP_SECRET` 需要从飞书开发者后台获取自建应用的 App Secret。
+
 ### Step 3：部署
-点 Deploy，等待约1分钟，获得 API 地址（如 `https://paper-experiment-h5.vercel.app`）。
+点 Deploy，约1分钟后获得 API 地址（如 `https://paper-experiment-h5.vercel.app`）。
 
 ### Step 4：配置前端API地址
-在 `public/assets/api.js` 里找到 `BASE`，改为你的 Vercel API 地址，然后 Redeploy。
+在 `public/assets/api.js` 里修改 `BASE` 为你的 Vercel API 地址，然后 Redeploy。
 
-## GitHub Pages 部署（H5前端）
+## GitHub Pages（H5前端）
 
-### 方法一：在 GitHub Pages 设置选 /public
+在仓库 Settings → Pages → Source: "Deploy from a branch" → Branch: `main` → Folder: **`/public`**
 
-1. 仓库 → Settings → Pages → Source: "Deploy from a branch"
-2. Branch 选 `main`，Folder 选 `/ (root)` 
-   - **前提**：先把 `public/` 里的内容移到根目录
-
-### 方法二：移到根目录（推荐）
-
-```bash
-# 把 public/ 里所有文件移到根目录
-cd /root/paper-experiment-h5
-mv public/* .
-# 然后 git push 到 GitHub，再在 Pages 设置里选 /(root)
-```
-
-### GitHub Pages 地址（部署成功后）
-`https://wenfan666521-boop.github.io/paper-experiment-h5/`
+访问地址：`https://wenfan666521-boop.github.io/paper-experiment-h5/`

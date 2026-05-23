@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       fetch(`https://open.feishu.cn/open-apis/sheets/v2/spreadsheets/${sheetToken}/values`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valueRange: { range: 'survey_responses!A:AW', values: [surveyRow] } })
+        body: JSON.stringify({ valueRange: { range: 'survey_responses!A:AN', values: [surveyRow] } })
       })
     ]);
 
