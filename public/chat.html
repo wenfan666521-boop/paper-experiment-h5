@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>AI 对话</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="chat-page">
+    <div class="chat-header">
+      <div class="chat-avatar" id="avatar"></div>
+      <div class="chat-title">
+        <div class="chat-name" id="aiName"></div>
+        <div class="chat-status" id="aiSub"></div>
+      </div>
+      <div class="chat-rounds" id="rounds">0 / 5 轮</div>
+    </div>
+
+    <div class="chat-body" id="chatBody"></div>
+
+    <div class="chat-finish-bar" id="finishBar" style="display:none;">
+      <button class="btn btn-block" id="finishBtn">✅ 完成对话，开始评价</button>
+    </div>
+
+    <div class="chat-input">
+      <textarea id="msgInput" placeholder="输入消息..." rows="1"></textarea>
+      <button class="chat-send" id="sendBtn" aria-label="发送">↑</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script src="assets/scenarios.js"></script>
+  <script src="assets/api.js"></script>
+  <script>
+    const MIN_ROUNDS = 5;
+    const aiType = State.getCurrentAi();
+    const subjectId = State.get('subject_id');
+    const aiInfo = AiInfo[aiType];
+    const scenarioInfo = Scenarios[State.get('scenario')];
+
+    // 初始化UI
+    document.getElementById('avatar').className = `chat-avatar ${aiType}`;
+    document.getElementById('avatar').textContent = aiInfo.avatar;
+    document.getElementById('aiName').textContent = aiInfo.name;
+    document.getElementById('aiSub').textContent = aiInfo.subtitle;
+
+    // 对话状态
+    let messages = []; // {role, content}
+    let userTurns = 0;
+    let isWaiting = false;
+
+    const body = document.getElementById('chatBody');
+    const input = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const roundsEl = document.getElementById('rounds');
+    const finishBar = document.getElementById('finishBar');
+
+    // 系统消息显示场景提示
+    addMsg('system', `你正在以「${scenarioInfo.title}」中主人公的身份与 AI 对话`);
+
+    // 初始问候
+    addLoading();
+    setTimeout(async () => {
+      removeLoading();
+      const greeting = aiType === 'exp'
+        ? '嗨～我是星程 🌟 很高兴认识你！跟我说说你想去哪、什么时候出发呀？😊'
+        : '您好。我是出行助手。\n\n步骤 1/5 · 基础信息收集\n\n请提供以下信息：\n① 出发城市\n② 目的地\n③ 出发日期\n④ 返回日期\n⑤ 出行人数';
+      addMsg('assistant', greeting);
+      messages.push({ role: 'assistant', content: greeting });
+      API.logMessage(subjectId, aiType, 0, 'assistant', greeting);
+    }, 600);
+
+    // 自动调整 textarea 高度
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+    });
+
+    // 发送
+    sendBtn.onclick = sendMessage;
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !isWaiting) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text || isWaiting) return;
+
+      isWaiting = true;
+      sendBtn.disabled = true;
+
+      addMsg('user', text);
+      messages.push({ role: 'user', content: text });
+      userTurns++;
+      updateRounds();
+      input.value = '';
+      input.style.height = 'auto';
+
+      API.logMessage(subjectId, aiType, userTurns, 'user', text);
+
+      addLoading();
+      const t0 = Date.now();
+      try {
+        const reply = await API.chat(aiType, messages, subjectId);
+        removeLoading();
+        addMsg('assistant', reply);
+        messages.push({ role: 'assistant', content: reply });
+        API.logMessage(subjectId, aiType, userTurns, 'assistant', reply, Date.now() - t0);
+      } catch (e) {
+        removeLoading();
+        addMsg('system', '⚠️ 对话出错，请重试: ' + e.message);
+      } finally {
+        isWaiting = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function addMsg(role, content) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.textContent = content;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function addLoading() {
+      const div = document.createElement('div');
+      div.id = 'loadingMsg';
+      div.className = 'msg loading';
+      div.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function removeLoading() {
+      const el = document.getElementById('loadingMsg');
+      if (el) el.remove();
+    }
+
+    function updateRounds() {
+      const display = Math.min(userTurns, MIN_ROUNDS);
+      roundsEl.textContent = `${display} / ${MIN_ROUNDS} 轮`;
+      if (userTurns >= MIN_ROUNDS) {
+        roundsEl.classList.add('done');
+        finishBar.style.display = 'block';
+      }
+    }
+
+    document.getElementById('finishBtn').onclick = () => {
+      State.set(`chat_${aiType}_messages`, messages);
+      State.set(`chat_${aiType}_turns`, userTurns);
+      navigate('survey.html');
+    };
+  </script>
+</body>
+</html>

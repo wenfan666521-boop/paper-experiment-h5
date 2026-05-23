@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>完成</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page" style="text-align:center;padding-top:60px;">
+    <div style="font-size:80px;margin-bottom:24px;">🎉</div>
+    <h1 style="font-size:26px;">研究完成！</h1>
+    <p style="color:#6b7280;margin:16px 0;">感谢您的参与，您已成功完成本次实验研究。</p>
+
+    <div class="card card-info" style="margin:24px 0;text-align:left;">
+      <h3 style="margin-top:0;">📋 任务码</h3>
+      <div style="font-size:28px;font-weight:700;color:#1e40af;letter-spacing:4px;padding:16px;background:#eff6ff;border-radius:10px;text-align:center;" id="taskCode">加载中...</div>
+      <p style="font-size:13px;color:#6b7280;margin-top:12px;">请复制此任务码，前往 Credamo 平台兑换奖励</p>
+    </div>
+
+    <div class="card" style="text-align:left;margin:24px 0;">
+      <h3 style="margin-top:0;">✅ 已收集</h3>
+      <p>• 人口学信息</p>
+      <p>• 场景操控检验（3题）</p>
+      <p>• 体验导向AI对话（≥5轮）+ 评价</p>
+      <p>• 功利导向AI对话（≥5轮）+ 评价</p>
+      <p style="margin:0;color:#6b7280;font-size:13px;">所有数据已匿名记录，感谢您的配合 🙏</p>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script>
+    document.getElementById('taskCode').textContent = State.get('task_code') || 'TASK_' + Math.random().toString(36).slice(2,8).toUpperCase();
+  </script>
+</body>
+</html>

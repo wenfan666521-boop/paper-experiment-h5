@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>基本信息</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page">
+    <div class="progress"><div class="progress-bar" style="width:20%;"></div></div>
+
+    <h1>👤 基本信息</h1>
+    <p style="color:#6b7280;">请如实填写下面3个问题</p>
+
+    <form id="demoForm">
+      <div class="form-group">
+        <label class="form-label">1. 请选择您的性别</label>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="gender" value="男" required>男</label>
+          <label class="radio-item"><input type="radio" name="gender" value="女" required>女</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">2. 请选择您的年龄段</label>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="age_group" value="0-20岁" required>0-20岁</label>
+          <label class="radio-item"><input type="radio" name="age_group" value="21-30岁" required>21-30岁</label>
+          <label class="radio-item"><input type="radio" name="age_group" value="31-40岁" required>31-40岁</label>
+          <label class="radio-item"><input type="radio" name="age_group" value="41-50岁" required>41-50岁</label>
+          <label class="radio-item"><input type="radio" name="age_group" value="51-60岁" required>51-60岁</label>
+          <label class="radio-item"><input type="radio" name="age_group" value="60岁以上" required>60岁以上</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">3. 我经常使用 AI 聊天机器人（如豆包、DeepSeek、元宝等）</label>
+        <div class="scale">
+          <div class="scale-labels"><span>非常不同意</span><span>非常同意</span></div>
+          <div class="scale-options" id="aiUsageScale"></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="btn-bar">
+      <button class="btn btn-block" id="nextBtn" disabled onclick="submitDemo()">继续 →</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script>
+    // 渲染 7点量表
+    const sc = document.getElementById('aiUsageScale');
+    for (let i=1; i<=7; i++) {
+      sc.innerHTML += `<div class="scale-option"><input type="radio" name="ai_usage_freq" id="aiuse${i}" value="${i}"><label for="aiuse${i}">${i}</label></div>`;
+    }
+
+    function checkComplete() {
+      const f = document.getElementById('demoForm');
+      const ok = f.gender.value && f.age_group.value && f.ai_usage_freq.value;
+      document.getElementById('nextBtn').disabled = !ok;
+    }
+    document.getElementById('demoForm').addEventListener('change', checkComplete);
+
+    function submitDemo() {
+      const f = document.getElementById('demoForm');
+      State.set('gender', f.gender.value);
+      State.set('age_group', f.age_group.value);
+      State.set('ai_usage_freq', parseInt(f.ai_usage_freq.value));
+      // 随机分配场景 & AI顺序
+      State.assignScenario();
+      State.assignAiOrder();
+      navigate('scenario.html');
+    }
+  </script>
+</body>
+</html>

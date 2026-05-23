@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>知情同意</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page">
+    <div class="progress"><div class="progress-bar" style="width:10%;"></div></div>
+
+    <h1>📋 知情同意书</h1>
+
+    <div class="card">
+      <h3>研究目的</h3>
+      <p>本研究旨在了解不同 AI 服务交互风格在不同场景下对用户体验的影响。</p>
+
+      <h3>您将做什么</h3>
+      <p>阅读一个旅行规划场景背景，然后与两个不同的 AI 助手分别对话（每次最少5轮），并填写相关问卷。整个过程约 10-15 分钟。</p>
+
+      <h3>数据使用</h3>
+      <p>• 所有数据<b>匿名收集</b>，仅记录回答内容、对话内容和设备信息（用于技术调试）</p>
+      <p>• 数据<b>仅用于学术研究</b>，不会用于商业用途</p>
+      <p>• 您可以随时退出，已收集数据将被销毁</p>
+
+      <h3>您的权利</h3>
+      <p>• 自愿参与，随时可退出</p>
+      <p>• 完成后获得任务码用于平台兑换报酬</p>
+    </div>
+
+    <div class="radio-item" onclick="toggleConsent()" id="consentBox" style="margin-top:20px;">
+      <input type="checkbox" id="consent">
+      <span>我已阅读并理解上述内容，<b>自愿参与</b>本研究</span>
+    </div>
+
+    <div class="btn-bar">
+      <button class="btn btn-block" id="nextBtn" disabled onclick="navigate('demographics.html')">继续 →</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script>
+    function toggleConsent() {
+      const cb = document.getElementById('consent');
+      cb.checked = !cb.checked;
+      document.getElementById('consentBox').classList.toggle('checked', cb.checked);
+      document.getElementById('nextBtn').disabled = !cb.checked;
+      if (cb.checked) State.set('consent', true);
+    }
+  </script>
+</body>
+</html>

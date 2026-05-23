@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>场景理解</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page">
+    <div class="progress"><div class="progress-bar" style="width:35%;"></div></div>
+
+    <h1>📝 场景理解</h1>
+    <p style="color:#6b7280;">基于刚才阅读的场景，请回答以下3个问题</p>
+
+    <div class="card" id="scenarioRecap"></div>
+
+    <form id="mcForm" style="margin-top:20px;"></form>
+
+    <div class="btn-bar">
+      <button class="btn btn-block" id="nextBtn" disabled onclick="submitMC()">继续 → 与 AI 助手对话</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script src="assets/scenarios.js"></script>
+  <script src="assets/survey-data.js"></script>
+  <script>
+    // 场景简述
+    const sc = Scenarios[State.get('scenario')];
+    document.getElementById('scenarioRecap').innerHTML = `<h3 style="margin:0;">${sc.title}</h3><p style="color:#6b7280;font-size:13px;margin:6px 0 0;">回顾：${sc.motivation}</p>`;
+
+    // 渲染3题
+    const form = document.getElementById('mcForm');
+    SurveyData.scenarioMC.forEach((item, idx) => {
+      let scaleHtml = `<div class="scale-options">`;
+      for (let i=1; i<=7; i++) {
+        scaleHtml += `<div class="scale-option"><input type="radio" name="${item.id}" id="${item.id}_${i}" value="${i}"><label for="${item.id}_${i}">${i}</label></div>`;
+      }
+      scaleHtml += `</div>`;
+      form.innerHTML += `<div class="card"><div class="scale-question"><b>Q${idx+1}.</b> ${item.q}</div><div class="scale-labels"><span>${item.left}</span><span>${item.right}</span></div>${scaleHtml}</div>`;
+    });
+
+    function checkComplete() {
+      const ok = SurveyData.scenarioMC.every(item => document.querySelector(`input[name="${item.id}"]:checked`));
+      document.getElementById('nextBtn').disabled = !ok;
+    }
+    form.addEventListener('change', checkComplete);
+
+    function submitMC() {
+      const data = {};
+      SurveyData.scenarioMC.forEach(item => {
+        data[item.id] = parseInt(document.querySelector(`input[name="${item.id}"]:checked`).value);
+      });
+      State.set('scenario_mc', data);
+      navigate('chat.html');
+    }
+  </script>
+</body>
+</html>

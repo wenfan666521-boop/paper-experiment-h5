@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>场景背景</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page">
+    <div class="progress"><div class="progress-bar" style="width:30%;"></div></div>
+
+    <h1 id="title">📖 场景背景</h1>
+    <p style="color:#6b7280;">请仔细阅读以下场景，并尽量将自己代入主人公的角色</p>
+
+    <div class="card card-scenario" id="content"></div>
+
+    <div class="countdown" id="countdown">⏳ 请仔细阅读，<span id="sec">10</span> 秒后可继续</div>
+
+    <div class="btn-bar">
+      <button class="btn btn-block" id="nextBtn" disabled onclick="navigate('scenario-mc.html')">我已仔细阅读，继续 →</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script src="assets/scenarios.js"></script>
+  <script>
+    const sc = Scenarios[State.get('scenario')];
+    document.getElementById('title').innerHTML = sc.title;
+    document.getElementById('content').innerHTML = sc.content;
+
+    let sec = 10;
+    const timer = setInterval(() => {
+      sec--;
+      document.getElementById('sec').textContent = sec;
+      if (sec <= 0) {
+        clearInterval(timer);
+        document.getElementById('countdown').style.display = 'none';
+        document.getElementById('nextBtn').disabled = false;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
