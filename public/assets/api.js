@@ -1,6 +1,6 @@
 // API 调用封装
 const API = {
-  BASE: window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api',
+  // BASE for Vercel deploy === 'localhost' ? 'http://localhost:3000/api' : '/api',
   MOCK: window.location.search.includes('mock=1') || !window.location.hostname.includes('vercel'),
 
   // 发送对话消息
