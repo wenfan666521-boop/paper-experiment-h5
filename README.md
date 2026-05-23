@@ -37,7 +37,7 @@ Cloudflare Workers（统一入口，按路由分发）
 │       ├── survey-data.js   # 量表配置
 │       └── style.css
 ├── workers/
-│   └── [chat].js           # Cloudflare Worker（统一入口）
+│   └── worker.js           # Cloudflare Worker（统一入口）
 └── docs/
     ├── cloudflare-deploy.md # Cloudflare部署详细指南
     ├── feishu-schema.md     # 飞书表格结构
@@ -72,7 +72,7 @@ Cloudflare Workers（统一入口，按路由分发）
 
 **Workers（API）**：
 1. Cloudflare Dashboard → Workers & Pages → Create Worker
-2. 上传 `workers/[chat].js` 代码
+2. 上传 `workers/worker.js` 代码
 3. Settings → Variables 添加所有环境变量
 4. Triggers → Routes 绑定：`api.aowuaowu2026.xyz`（或你的域名）
 
