@@ -1,9 +1,6 @@
-// API 调用封装 - Cloudflare Workers 版本
+// API 调用封装
 const API = {
-  // 部署后替换为你的 Cloudflare Workers URL，例如：
-  //   https://api.aowuaowu2026.xyz  (workers通过路由绑定到这个地址)
-  //   或者 https://paper-api.your-subdomain.workers.dev
-  BASE: '/api',
+  BASE: 'https://young-sunset-ca8f.wenfan666521.workers.dev',
   MOCK: window.location.search.includes('mock=1'),
 
   async chat(aiType, messages, subjectId) {
@@ -46,9 +43,9 @@ const API = {
     await new Promise(r => setTimeout(r, 800 + Math.random()*1000));
     const last = messages[messages.length-1].content;
     if (aiType === 'exp') {
-      return `🌟 [体验AI Mock] 嗷～收到啦！你说"${last.slice(0,15)}..."呀～这个我懂的！让我帮你想想～你是想自由探索，还是希望我直接帮你定下方案呀？😊`;
+      return '🌟 [体验AI Mock] 嗷～收到啦！你说"' + last.slice(0,15) + '..."呀～让我帮你想想～你是想自由探索，还是希望我直接帮你定下方案呀？😊';
     } else {
-      return `✈️ [功利AI Mock] 步骤 X/5\n\n已收到信息。\n请选择：\n[1] 选项一\n[2] 选项二\n[3] 选项三\n\n请回复编号 [1/2/3]。`;
+      return '✈️ [功利AI Mock] 步骤 X/5\n\n已收到信息。\n请选择：\n[1] 选项一\n[2] 选项二\n[3] 选项三\n\n请回复编号 [1/2/3]。';
     }
   }
 };
