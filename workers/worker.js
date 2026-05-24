@@ -10,69 +10,19 @@ function jsonResp(status, body) {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
-// ========== 百炼应用级 API（SSE 流式解析） ==========
-async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null) {
-  const body = {
-    input: { prompt },
-    parameters: { temperature, max_tokens: 800 }
-  };
-  if (sessionId) body.session_id = sessionId;
-
+// ========== 百炼应用级 API ==========
+async function bailianChat(appId, apiKey, history, temperature) {
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey,
-      'Content-Type': 'application/json',
-      'X-DashScope-SSE': 'enable'
-    },
-    body: JSON.stringify(body)
+    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      input: { prompt: history },
+      parameters: { stream: false, temperature, max_tokens: 800 }
+    })
   });
-
-  if (!r.ok) {
-    // 读原始文本以便调试
-    const rawText = await r.text();
-    let msg = 'Bailian API error: ' + r.status;
-    try { msg = JSON.parse(rawText).error?.message || msg; } catch (_) {}
-    throw new Error(msg + ' | raw: ' + rawText.slice(0, 200));
-  }
-
-  const reader = r.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let fullText = '';
-  let respSessionId = sessionId;
-
-  try {
-    while (true) {
-      const { done, chunk } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(chunk, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('data:')) {
-          const data = trimmed.slice(5).trim();
-          if (data && data !== '[DONE]') {
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.output?.session_id) respSessionId = parsed.output.session_id;
-              const text = parsed.output?.text || parsed.output?.content || '';
-              if (text) fullText += text;
-            } catch (_) {}
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  if (!fullText) {
-    // 没有解析到文本，看看原始 buffer 里有什么
-    throw new Error('Empty response from Bailian, raw buffer: ' + buffer.slice(0, 300));
-  }
-  return { text: fullText, sessionId: respSessionId };
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'Bailian API error');
+  return d.output?.text || d.output?.content || '抱歉，暂时无法回复。';
 }
 
 // ========== Chat ==========
@@ -80,35 +30,18 @@ async function handleChat(request, env) {
   let body;
   try { body = await request.json(); }
   catch { return jsonResp(400, { error: 'Invalid JSON' }); }
-
-  const { aiType, messages, sessionId } = body;
+  
+  const { aiType, messages } = body;
   if (!aiType || !messages) return jsonResp(400, { error: '缺少 aiType 或 messages' });
 
   const appId = aiType === 'exp' ? env.BAILIAN_APP_ID_EXP : env.BAILIAN_APP_ID_UTIL;
   const apiKey = aiType === 'exp' ? env.BAILIAN_API_KEY_EXP : env.BAILIAN_API_KEY_UTIL;
   if (!appId || !apiKey) return jsonResp(500, { error: 'credentials not configured' });
 
-  const history = messages.slice(-20).map(m => {
-    const role = m.role === 'assistant' ? '助手' : '用户';
-    return `${role}：${m.content}`;
-  }).join('\n');
-
-  // sessionId 优先用客户端传的，其次用 KV 里存的
-  let sid = sessionId || null;
-  if (!sid && messages.length > 0) {
-    const kv = env.DATA_KV;
-    const stored = await kv.get('session:' + body.subjectId + ':' + aiType, 'json');
-    sid = stored?.sessionId || null;
-  }
-
+  const history = messages.slice(-20).map(m => m.content).join('\n');
   try {
-    const result = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3, sid);
-    // 保存 session_id 到 KV
-    if (result.sessionId) {
-      const kv = env.DATA_KV;
-      await kv.put('session:' + body.subjectId + ':' + aiType, JSON.stringify({ sessionId: result.sessionId }));
-    }
-    return jsonResp(200, { message: result.text, sessionId: result.sessionId || sid });
+    const reply = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3);
+    return jsonResp(200, { message: reply });
   } catch (e) {
     return jsonResp(500, { error: e.message });
   }
