@@ -3,15 +3,21 @@ const API = {
   BASE: 'https://young-sunset-ca8f.wenfan666521.workers.dev',
   MOCK: window.location.search.includes('mock=1'),
 
+  // 会话状态：每个 aiType 维护自己的 sessionId
+  _sessions: {},
+
   async chat(aiType, messages, subjectId) {
     if (this.MOCK) return this.mockChat(aiType, messages);
+    const sessionId = this._sessions[aiType] || null;
     const res = await fetch(`${this.BASE}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ aiType, messages, subjectId })
+      body: JSON.stringify({ aiType, messages, subjectId, sessionId })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'API错误');
+    // 保存 sessionId 供下次使用
+    if (data.sessionId) this._sessions[aiType] = data.sessionId;
     return data.message;
   },
 
@@ -43,7 +49,7 @@ const API = {
     await new Promise(r => setTimeout(r, 800 + Math.random()*1000));
     const last = messages[messages.length-1].content;
     if (aiType === 'exp') {
-      return '🌟 [体验AI Mock] 嗷～收到啦！你说"' + last.slice(0,15) + '..."呀～让我帮你想想～你是想自由探索，还是希望我直接帮你定下方案呀？😊';
+      return '🌟 [体验AI Mock] 嗷～收到啦！你说"' + last.slice(0,15) + '..."呀～让我帮你想想～你是想自由探索，还是希望我直接帮我定下方案呀？😊';
     } else {
       return '✈️ [功利AI Mock] 步骤 X/5\n\n已收到信息。\n请选择：\n[1] 选项一\n[2] 选项二\n[3] 选项三\n\n请回复编号 [1/2/3]。';
     }

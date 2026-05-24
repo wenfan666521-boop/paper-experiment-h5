@@ -11,18 +11,23 @@ function jsonResp(status, body) {
 }
 
 // ========== 百炼应用级 API ==========
-async function bailianChat(appId, apiKey, history, temperature) {
+async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null) {
+  const input = { prompt };
+  if (sessionId) input.session_id = sessionId;
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      input: { prompt: history },
-      parameters: { stream: false, temperature, max_tokens: 800 }
-    })
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ input, parameters: { temperature, max_tokens: 800 } })
   });
   const d = await r.json();
   if (!r.ok) throw new Error(d.error?.message || 'Bailian API error');
-  return d.output?.text || d.output?.content || '抱歉，暂时无法回复。';
+  return {
+    text: d.output?.text || d.output?.content || '抱歉，暂时无法回复。',
+    sessionId: d.session_id || null
+  };
 }
 
 // ========== Chat ==========
@@ -30,18 +35,35 @@ async function handleChat(request, env) {
   let body;
   try { body = await request.json(); }
   catch { return jsonResp(400, { error: 'Invalid JSON' }); }
-  
-  const { aiType, messages } = body;
+
+  const { aiType, messages, sessionId } = body;
   if (!aiType || !messages) return jsonResp(400, { error: '缺少 aiType 或 messages' });
 
   const appId = aiType === 'exp' ? env.BAILIAN_APP_ID_EXP : env.BAILIAN_APP_ID_UTIL;
   const apiKey = aiType === 'exp' ? env.BAILIAN_API_KEY_EXP : env.BAILIAN_API_KEY_UTIL;
   if (!appId || !apiKey) return jsonResp(500, { error: 'credentials not configured' });
 
-  const history = messages.slice(-20).map(m => m.content).join('\n');
+  const history = messages.slice(-20).map(m => {
+    const role = m.role === 'assistant' ? '助手' : '用户';
+    return `${role}：${m.content}`;
+  }).join('\n');
+
+  // sessionId 优先用客户端传的，其次用 KV 里存的
+  let sid = sessionId || null;
+  if (!sid && messages.length > 0) {
+    const kv = env.DATA_KV;
+    const stored = await kv.get('session:' + body.subjectId + ':' + aiType, 'json');
+    sid = stored?.sessionId || null;
+  }
+
   try {
-    const reply = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3);
-    return jsonResp(200, { message: reply });
+    const result = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3, sid);
+    // 保存 session_id 到 KV
+    if (result.sessionId) {
+      const kv = env.DATA_KV;
+      await kv.put('session:' + body.subjectId + ':' + aiType, JSON.stringify({ sessionId: result.sessionId }));
+    }
+    return jsonResp(200, { message: result.text, sessionId: result.sessionId || sid });
   } catch (e) {
     return jsonResp(500, { error: e.message });
   }
