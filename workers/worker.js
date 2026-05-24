@@ -120,6 +120,83 @@ async function handleSubmitSurvey(request, env) {
   }
 }
 
+// ========== Admin: List Subjects ==========
+async function handleAdminList(request, env) {
+  try {
+    const kv = env.DATA_KV;
+    const subjects = await kv.get('subjects', 'json') || [];
+    return jsonResp(200, { subjects });
+  } catch (e) {
+    return jsonResp(500, { error: e.message });
+  }
+}
+
+// ========== Admin: Export All Data as CSV ==========
+async function handleExport(request, env) {
+  try {
+    const kv = env.DATA_KV;
+    const subjects = await kv.get('subjects', 'json') || [];
+    
+    const rows = [];
+    // Header
+    rows.push(['subject_id','scenario','ai_order','gender','age_group','ai_usage_freq',
+      'start_time','finish_time','taskCode',
+      'exp_attention','exp_style_mc_1','exp_style_mc_2','exp_style_mc_3',
+      'exp_pleasure_1','exp_pleasure_2','exp_pleasure_3',
+      'exp_effort_1','exp_effort_2','exp_effort_3',
+      'exp_value_1','exp_value_2',
+      'exp_wtp_slider','exp_wtp_1','exp_wtp_2','exp_wtp_3',
+      'util_attention','util_style_mc_1','util_style_mc_2','util_style_mc_3',
+      'util_pleasure_1','util_pleasure_2','util_pleasure_3',
+      'util_effort_1','util_effort_2','util_effort_3',
+      'util_value_1','util_value_2',
+      'util_wtp_slider','util_wtp_1','util_wtp_2','util_wtp_3',
+      'scen_mc_1','scen_mc_2','scen_mc_3'
+    ].join(','));
+    
+    for (const sid of subjects) {
+      const pKey = 'participant:' + sid;
+      const sKey = 'survey:' + sid;
+      const p = await kv.get(pKey, 'json');
+      const s = await kv.get(sKey, 'json');
+      if (!p || !s) continue;
+      
+      const exp = s.survey_exp || {};
+      const util = s.survey_util || {};
+      const sc = s.scenario_mc || {};
+      
+      const row = [
+        p.subject_id, p.scenario, p.ai_order,
+        p.gender, p.age_group, p.ai_usage_freq,
+        p.start_time, p.finish_time, p.taskCode,
+        exp.attention_check ?? '', exp.style_mc_1 || '', exp.style_mc_2 || '', exp.style_mc_3 || '',
+        exp.pleasure_1 || '', exp.pleasure_2 || '', exp.pleasure_3 || '',
+        exp.effort_1 || '', exp.effort_2 || '', exp.effort_3 || '',
+        exp.value_1 || '', exp.value_2 || '',
+        exp.wtp_slider ?? '', exp.wtp_1 || '', exp.wtp_2 || '', exp.wtp_3 || '',
+        util.attention_check ?? '', util.style_mc_1 || '', util.style_mc_2 || '', util.style_mc_3 || '',
+        util.pleasure_1 || '', util.pleasure_2 || '', util.pleasure_3 || '',
+        util.effort_1 || '', util.effort_2 || '', util.effort_3 || '',
+        util.value_1 || '', util.value_2 || '',
+        util.wtp_slider ?? '', util.wtp_1 || '', util.wtp_2 || '', util.wtp_3 || '',
+        sc.scen_mc_1 || '', sc.scen_mc_2 || '', sc.scen_mc_3 || ''
+      ];
+      rows.push(row.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+    }
+    
+    const csv = rows.join('\n');
+    return new Response(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv;charset=utf-8',
+        'Content-Disposition': 'attachment; filename="experiment_data.csv"'
+      }
+    });
+  } catch (e) {
+    return jsonResp(500, { error: e.message });
+  }
+}
+
 // ========== Main ==========
 export default {
   async fetch(request, env, ctx) {
@@ -129,6 +206,8 @@ export default {
     if (path.endsWith('/chat')) return handleChat(request, env);
     if (path.endsWith('/log-message')) return handleLogMessage(request, env);
     if (path.endsWith('/submit-survey')) return handleSubmitSurvey(request, env);
+    if (path === '/admin/list-subjects') return handleAdminList(request, env);
+    if (path === '/admin/export') return handleExport(request, env);
     return jsonResp(404, { error: 'Not Found' });
   }
 };
