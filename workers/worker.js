@@ -14,7 +14,7 @@ function jsonResp(status, body) {
 async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null) {
   const body = {
     input: { prompt },
-    parameters: { temperature, max_tokens: 800, stream: true }
+    parameters: { temperature, max_tokens: 800 }
   };
   if (sessionId) body.session_id = sessionId;
 
@@ -29,8 +29,11 @@ async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null)
   });
 
   if (!r.ok) {
-    const d = await r.json().catch(() => ({}));
-    throw new Error(d.error?.message || 'Bailian API error: ' + r.status);
+    // 读原始文本以便调试
+    const rawText = await r.text();
+    let msg = 'Bailian API error: ' + r.status;
+    try { msg = JSON.parse(rawText).error?.message || msg; } catch (_) {}
+    throw new Error(msg + ' | raw: ' + rawText.slice(0, 200));
   }
 
   const reader = r.body.getReader();
@@ -47,8 +50,9 @@ async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null)
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
       for (const line of lines) {
-        if (line.startsWith('data:')) {
-          const data = line.slice(5).trim();
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          const data = trimmed.slice(5).trim();
           if (data && data !== '[DONE]') {
             try {
               const parsed = JSON.parse(data);
@@ -64,7 +68,10 @@ async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null)
     reader.releaseLock();
   }
 
-  if (!fullText) throw new Error('Empty response from Bailian');
+  if (!fullText) {
+    // 没有解析到文本，看看原始 buffer 里有什么
+    throw new Error('Empty response from Bailian, raw buffer: ' + buffer.slice(0, 300));
+  }
   return { text: fullText, sessionId: respSessionId };
 }
 
