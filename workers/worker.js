@@ -131,14 +131,13 @@ async function handleAdminList(request, env) {
   }
 }
 
-// ========== Admin: Export All Data as CSV ==========
+// ========== Admin: Export All Data as CSV (量表数据) ==========
 async function handleExport(request, env) {
   try {
     const kv = env.DATA_KV;
     const subjects = await kv.get('subjects', 'json') || [];
     
     const rows = [];
-    // Header
     rows.push(['subject_id','scenario','ai_order','gender','age_group','ai_usage_freq',
       'start_time','finish_time','taskCode',
       'exp_attention','exp_style_mc_1','exp_style_mc_2','exp_style_mc_3',
@@ -155,16 +154,10 @@ async function handleExport(request, env) {
     ].join(','));
     
     for (const sid of subjects) {
-      const pKey = 'participant:' + sid;
-      const sKey = 'survey:' + sid;
-      const p = await kv.get(pKey, 'json');
-      const s = await kv.get(sKey, 'json');
+      const p = await kv.get('participant:' + sid, 'json');
+      const s = await kv.get('survey:' + sid, 'json');
       if (!p || !s) continue;
-      
-      const exp = s.survey_exp || {};
-      const util = s.survey_util || {};
-      const sc = s.scenario_mc || {};
-      
+      const exp = s.survey_exp || {}, util = s.survey_util || {}, sc = s.scenario_mc || {};
       const row = [
         p.subject_id, p.scenario, p.ai_order,
         p.gender, p.age_group, p.ai_usage_freq,
@@ -183,18 +176,67 @@ async function handleExport(request, env) {
       ];
       rows.push(row.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
     }
-    
-    const csv = rows.join('\n');
-    return new Response(csv, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/csv;charset=utf-8',
-        'Content-Disposition': 'attachment; filename="experiment_data.csv"'
-      }
+    return new Response(rows.join('\n'), {
+      headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="survey_data.csv"' }
     });
-  } catch (e) {
-    return jsonResp(500, { error: e.message });
-  }
+  } catch (e) { return jsonResp(500, { error: e.message }); }
+}
+
+// ========== Admin: Export Chat Logs (对话日志) ==========
+async function handleExportChats(request, env) {
+  try {
+    const kv = env.DATA_KV;
+    const url = new URL(request.url);
+    const aiType = url.searchParams.get('type') || 'exp'; // exp or util
+    const subjects = await kv.get('subjects', 'json') || [];
+    
+    const rows = [];
+    rows.push(['subject_id','turn','role','content','responseTimeMs','logTime']);
+    
+    for (const sid of subjects) {
+      const chatLogs = await kv.get('chat:' + sid, 'json') || [];
+      // 过滤出指定 aiType 的消息
+      const filtered = chatLogs.filter(m => m.aiType === aiType);
+      for (const msg of filtered) {
+        rows.push([
+          sid,
+          msg.turn ?? '',
+          msg.role || '',
+          (msg.content || '').replace(/"/g, '""'),
+          msg.responseTimeMs ?? '',
+          msg.logTime || ''
+        ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+      }
+    }
+    return new Response(rows.join('\n'), {
+      headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': `attachment; filename="chat_${aiType}.csv"` }
+    });
+  } catch (e) { return jsonResp(500, { error: e.message }); }
+}
+
+// ========== Admin: Export All Chat Logs (全部对话，不区分AI类型) ==========
+async function handleExportAllChats(request, env) {
+  try {
+    const kv = env.DATA_KV;
+    const subjects = await kv.get('subjects', 'json') || [];
+    
+    const rows = [];
+    rows.push(['subject_id','aiType','turn','role','content','responseTimeMs','logTime']);
+    
+    for (const sid of subjects) {
+      const chatLogs = await kv.get('chat:' + sid, 'json') || [];
+      for (const msg of chatLogs) {
+        rows.push([
+          sid, msg.aiType || '', msg.turn ?? '', msg.role || '',
+          (msg.content || '').replace(/"/g, '""'),
+          msg.responseTimeMs ?? '', msg.logTime || ''
+        ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+      }
+    }
+    return new Response(rows.join('\n'), {
+      headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="chat_all.csv"' }
+    });
+  } catch (e) { return jsonResp(500, { error: e.message }); }
 }
 
 // ========== Main ==========
@@ -208,6 +250,8 @@ export default {
     if (path.endsWith('/submit-survey')) return handleSubmitSurvey(request, env);
     if (path === '/admin/list-subjects') return handleAdminList(request, env);
     if (path === '/admin/export') return handleExport(request, env);
+    if (path === '/admin/export-chats') return handleExportChats(request, env);
+    if (path === '/admin/export-all-chats') return handleExportAllChats(request, env);
     return jsonResp(404, { error: 'Not Found' });
   }
 };
