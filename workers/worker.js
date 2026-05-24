@@ -176,7 +176,9 @@ async function handleExport(request, env) {
       ];
       rows.push(row.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
     }
-    return new Response(rows.join('\n'), {
+    // 添加 BOM 解决 Excel 中文乱码
+    const BOM = '\uFEFF';
+    return new Response(BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="survey_data.csv"' }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
@@ -208,7 +210,7 @@ async function handleExportChats(request, env) {
         ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
       }
     }
-    return new Response(rows.join('\n'), {
+    return new Response(BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': `attachment; filename="chat_${aiType}.csv"` }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
@@ -233,7 +235,7 @@ async function handleExportAllChats(request, env) {
         ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
       }
     }
-    return new Response(rows.join('\n'), {
+    return new Response(BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="chat_all.csv"' }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
