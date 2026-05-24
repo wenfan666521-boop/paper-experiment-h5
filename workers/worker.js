@@ -10,6 +10,9 @@ function jsonResp(status, body) {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
+// CSV BOM 标记，解决 Excel 中文乱码
+const CSV_BOM = '\uFEFF';
+
 // ========== 百炼应用级 API ==========
 async function bailianChat(appId, apiKey, history, temperature) {
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
@@ -177,8 +180,7 @@ async function handleExport(request, env) {
       rows.push(row.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
     }
     // 添加 BOM 解决 Excel 中文乱码
-    const BOM = '\uFEFF';
-    return new Response(BOM + rows.join('\r\n'), {
+    return new Response(CSV_BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="survey_data.csv"' }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
@@ -210,7 +212,7 @@ async function handleExportChats(request, env) {
         ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
       }
     }
-    return new Response(BOM + rows.join('\r\n'), {
+    return new Response(CSV_BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': `attachment; filename="chat_${aiType}.csv"` }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
@@ -235,7 +237,7 @@ async function handleExportAllChats(request, env) {
         ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
       }
     }
-    return new Response(BOM + rows.join('\r\n'), {
+    return new Response(CSV_BOM + rows.join('\r\n'), {
       headers: { 'Content-Type': 'text/csv;charset=utf-8', 'Content-Disposition': 'attachment; filename="chat_all.csv"' }
     });
   } catch (e) { return jsonResp(500, { error: e.message }); }
