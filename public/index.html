@@ -35,5 +35,11 @@
   </div>
 
   <script src="assets/state.js"></script>
+  <script>
+    // 从首页进入时，如果之前有实验进度则强制重置
+    if (State.getPhase() !== 'init') {
+      State.resetExperiment();
+    }
+  </script>
 </body>
 </html>

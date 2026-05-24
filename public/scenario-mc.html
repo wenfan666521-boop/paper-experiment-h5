@@ -26,26 +26,33 @@
   <script src="assets/scenarios.js"></script>
   <script src="assets/survey-data.js"></script>
   <script>
-    // 场景简述
-    const sc = Scenarios[State.get('scenario')];
-    document.getElementById('scenarioRecap').innerHTML = `<h3 style="margin:0;">${sc.title}</h3><p style="color:#6b7280;font-size:13px;margin:6px 0 0;">回顾：${sc.motivation}</p>`;
-
-    // 渲染3题
-    const form = document.getElementById('mcForm');
-    SurveyData.scenarioMC.forEach((item, idx) => {
-      let scaleHtml = `<div class="scale-options">`;
-      for (let i=1; i<=7; i++) {
-        scaleHtml += `<div class="scale-option"><input type="radio" name="${item.id}" id="${item.id}_${i}" value="${i}"><label for="${item.id}_${i}">${i}</label></div>`;
-      }
-      scaleHtml += `</div>`;
-      form.innerHTML += `<div class="card"><div class="scale-question"><b>Q${idx+1}.</b> ${item.q}</div><div class="scale-labels"><span>${item.left}</span><span>${item.right}</span></div>${scaleHtml}</div>`;
-    });
-
-    function checkComplete() {
-      const ok = SurveyData.scenarioMC.every(item => document.querySelector(`input[name="${item.id}"]:checked`));
-      document.getElementById('nextBtn').disabled = !ok;
+    // 进入时校验：必须已完成 scenario 阅读
+    if (!State.validatePhase('scenario_read')) {
+      // validatePhase 会自动重置并跳转
+    } else {
+      initPage();
     }
-    form.addEventListener('change', checkComplete);
+
+    function initPage() {
+      const sc = Scenarios[State.get('scenario')];
+      document.getElementById('scenarioRecap').innerHTML = `<h3 style="margin:0;">${sc.title}</h3><p style="color:#6b7280;font-size:13px;margin:6px 0 0;">回顾：${sc.motivation}</p>`;
+
+      const form = document.getElementById('mcForm');
+      SurveyData.scenarioMC.forEach((item, idx) => {
+        let scaleHtml = `<div class="scale-options">`;
+        for (let i=1; i<=7; i++) {
+          scaleHtml += `<div class="scale-option"><input type="radio" name="${item.id}" id="${item.id}_${i}" value="${i}"><label for="${item.id}_${i}">${i}</label></div>`;
+        }
+        scaleHtml += `</div>`;
+        form.innerHTML += `<div class="card"><div class="scale-question"><b>Q${idx+1}.</b> ${item.q}</div><div class="scale-labels"><span>${item.left}</span><span>${item.right}</span></div>${scaleHtml}</div>`;
+      });
+
+      function checkComplete() {
+        const ok = SurveyData.scenarioMC.every(item => document.querySelector(`input[name="${item.id}"]:checked`));
+        document.getElementById('nextBtn').disabled = !ok;
+      }
+      form.addEventListener('change', checkComplete);
+    }
 
     function submitMC() {
       const data = {};
@@ -53,6 +60,7 @@
         data[item.id] = parseInt(document.querySelector(`input[name="${item.id}"]:checked`).value);
       });
       State.set('scenario_mc', data);
+      State.setPhase('scenario_mc');
       navigate('chat.html');
     }
   </script>

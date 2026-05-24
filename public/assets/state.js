@@ -1,4 +1,16 @@
 // 全局状态管理 - 基于 sessionStorage
+const PHASE_ORDER = [
+  'init',           // 0: index（实验未开始）
+  'consented',      // 1: consent 完成
+  'demographics',   // 2: demographics 完成，场景和AI顺序已分配
+  'scenario_read',  // 3: scenario 阅读完成
+  'scenario_mc',    // 4: 场景操控检验完成
+  'chat_1',         // 5: 第1个AI对话完成
+  'survey_1',       // 6: 第1个AI评价完成
+  'chat_2',         // 7: 第2个AI对话完成
+  'survey_2',       // 8: 第2个AI评价完成 → 最终提交
+];
+
 const State = {
   KEY: 'experiment_state',
 
@@ -8,6 +20,10 @@ const State = {
       this.set('subject_id', id);
       this.set('start_time', new Date().toISOString());
       this.set('user_agent', navigator.userAgent);
+    }
+    // 保证 phase 字段存在
+    if (!this.get('phase')) {
+      this.set('phase', 'init');
     }
   },
 
@@ -31,18 +47,58 @@ const State = {
     sessionStorage.removeItem(this.KEY);
   },
 
-  // 场景随机分配（在 demographics 提交后调用）
+  // 重置整个实验（从首页重新开始时调用）
+  resetExperiment() {
+    this.clear();
+    this.init();
+  },
+
+  // ---- phase 管理 ----
+  setPhase(phase) {
+    this.set('phase', phase);
+  },
+
+  getPhase() {
+    return this.get('phase') || 'init';
+  },
+
+  getPhaseIndex(phase) {
+    return PHASE_ORDER.indexOf(phase);
+  },
+
+  // 校验当前 phase 是否在某个阶段之后（用于页面进入校验）
+  // expectAfter = true 表示 "必须已经经过了这些阶段才合法"
+  checkPhase(neededPhase) {
+    const current = this.getPhase();
+    const currentIdx = this.getPhaseIndex(current);
+    const neededIdx = this.getPhaseIndex(neededPhase);
+    // 允许当前 phase == neededPhase，或在 neededPhase 之后
+    return currentIdx >= neededIdx;
+  },
+
+  // 页面进入时校验，不通过则强制重置
+  validatePhase(neededPhase) {
+    if (!this.checkPhase(neededPhase)) {
+      console.warn(`[State] Phase mismatch: expected ${neededPhase}, got ${this.getPhase()}. Resetting.`);
+      this.resetExperiment();
+      navigate('index.html');
+      return false;
+    }
+    return true;
+  },
+
+  // ---- 场景随机分配 ----
   assignScenario() {
     if (!this.get('scenario')) {
       this.set('scenario', Math.random() < 0.5 ? 'exp' : 'util');
     }
   },
 
-  // AI顺序随机分配
+  // ---- AI顺序随机分配 ----
   assignAiOrder() {
     if (!this.get('ai_order')) {
       this.set('ai_order', Math.random() < 0.5 ? 'exp_first' : 'util_first');
-      this.set('current_ai_index', 0); // 0: 第一个AI, 1: 第二个AI
+      this.set('current_ai_index', 0);
     }
   },
 
@@ -89,5 +145,5 @@ document.addEventListener('change', (e) => {
   }
 });
 
-// 初始化（仅在非entry页）
+// 初始化
 State.init();

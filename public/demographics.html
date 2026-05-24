@@ -50,6 +50,11 @@
 
   <script src="assets/state.js"></script>
   <script>
+    // 进入时校验 phase（必须从 consent 来）
+    if (!State.validatePhase('consented')) {
+      // validatePhase 会自动重置并跳转，不用再做别的
+    } else {
+
     // 渲染 7点量表
     const sc = document.getElementById('aiUsageScale');
     for (let i=1; i<=7; i++) {
@@ -71,7 +76,10 @@
       // 随机分配场景 & AI顺序
       State.assignScenario();
       State.assignAiOrder();
+      State.setPhase('demographics');
       navigate('scenario.html');
+    }
+
     }
   </script>
 </body>

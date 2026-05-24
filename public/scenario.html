@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>场景背景</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -18,27 +18,37 @@
     <div class="countdown" id="countdown">⏳ 请仔细阅读，<span id="sec">10</span> 秒后可继续</div>
 
     <div class="btn-bar">
-      <button class="btn btn-block" id="nextBtn" disabled onclick="navigate('scenario-mc.html')">我已仔细阅读，继续 →</button>
+      <button class="btn btn-block" id="nextBtn" disabled onclick="goNext()">我已仔细阅读，继续 →</button>
     </div>
   </div>
 
   <script src="assets/state.js"></script>
   <script src="assets/scenarios.js"></script>
   <script>
-    const sc = Scenarios[State.get('scenario')];
-    document.getElementById('title').innerHTML = sc.title;
-    document.getElementById('content').innerHTML = sc.content;
+    // 进入时校验：必须已完成 demographics
+    if (!State.validatePhase('demographics')) {
+      // validatePhase 会自动重置并跳转
+    } else {
+      const sc = Scenarios[State.get('scenario')];
+      document.getElementById('title').innerHTML = sc.title;
+      document.getElementById('content').innerHTML = sc.content;
 
-    let sec = 10;
-    const timer = setInterval(() => {
-      sec--;
-      document.getElementById('sec').textContent = sec;
-      if (sec <= 0) {
-        clearInterval(timer);
-        document.getElementById('countdown').style.display = 'none';
-        document.getElementById('nextBtn').disabled = false;
-      }
-    }, 1000);
+      let sec = 10;
+      const timer = setInterval(() => {
+        sec--;
+        document.getElementById('sec').textContent = sec;
+        if (sec <= 0) {
+          clearInterval(timer);
+          document.getElementById('countdown').style.display = 'none';
+          document.getElementById('nextBtn').disabled = false;
+        }
+      }, 1000);
+    }
+
+    function goNext() {
+      State.setPhase('scenario_read');
+      navigate('scenario-mc.html');
+    }
   </script>
 </body>
 </html>

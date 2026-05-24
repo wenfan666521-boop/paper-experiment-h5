@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>对话评价</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -29,90 +29,101 @@
   <script src="assets/survey-data.js"></script>
   <script src="assets/api.js"></script>
   <script>
-    const aiType = State.getCurrentAi();
-    const aiInfo = AiInfo[aiType];
-    const isFirst = (State.get('current_ai_index') || 0) === 0;
-    document.getElementById('aiNameInline').textContent = aiInfo.name;
-    document.getElementById('title').textContent = `📝 ${aiInfo.name} 评价（${isFirst ? '1/2' : '2/2'}）`;
-    document.getElementById('progBar').style.width = isFirst ? '55%' : '85%';
+    // 进入时 phase 校验
+    const aiIdx = State.get('current_ai_index') || 0;
+    const neededPhase = aiIdx === 0 ? 'chat_1' : 'chat_2';
+    if (!State.validatePhase(neededPhase)) {
+      // validatePhase 会自动重置并跳转
+    } else {
+      initSurvey();
+    }
 
-    const form = document.getElementById('surveyForm');
+    function initSurvey() {
+      const aiType = State.getCurrentAi();
+      const aiInfo = AiInfo[aiType];
+      const isFirst = (State.get('current_ai_index') || 0) === 0;
+      document.getElementById('aiNameInline').textContent = aiInfo.name;
+      document.getElementById('title').textContent = `📝 ${aiInfo.name} 评价（${isFirst ? '1/2' : '2/2'}）`;
+      document.getElementById('progBar').style.width = isFirst ? '55%' : '85%';
 
-    // ---- 注意力检查 ----
-    let html = `<div class="card"><h3>① 阅读检查</h3><div class="scale-question">${SurveyData.attentionCheck.q}</div><div class="radio-group">`;
-    SurveyData.attentionCheck.options.forEach(opt => {
-      html += `<label class="radio-item"><input type="radio" name="attention_check" value="${opt.value}">${opt.label}</label>`;
-    });
-    html += `</div></div>`;
+      const form = document.getElementById('surveyForm');
 
-    // ---- 风格操控检验 ----
-    html += `<h2 style="margin-top:24px;">② 您对 AI 助手的整体感受</h2>`;
-    SurveyData.styleMC.forEach((item, idx) => {
-      html += renderScale(item, `style_mc_${idx+1}`);
-    });
+      // ---- 注意力检查 ----
+      let html = `<div class="card"><h3>① 阅读检查</h3><div class="scale-question">${SurveyData.attentionCheck.q}</div><div class="radio-group">`;
+      SurveyData.attentionCheck.options.forEach(opt => {
+        html += `<label class="radio-item"><input type="radio" name="attention_check" value="${opt.value}">${opt.label}</label>`;
+      });
+      html += `</div></div>`;
 
-    // ---- 乐趣 ----
-    html += `<h2 style="margin-top:24px;">③ 您对交互过程的感受</h2>`;
-    SurveyData.pleasure.forEach((item, idx) => {
-      html += renderScale(item, `pleasure_${idx+1}`);
-    });
+      // ---- 风格操控检验 ----
+      html += `<h2 style="margin-top:24px;">② 您对 AI 助手的整体感受</h2>`;
+      SurveyData.styleMC.forEach((item, idx) => {
+        html += renderScale(item, `style_mc_${idx+1}`);
+      });
 
-    // ---- 努力 ----
-    SurveyData.effort.forEach((item, idx) => {
-      html += renderScale(item, `effort_${idx+1}`);
-    });
+      // ---- 乐趣 ----
+      html += `<h2 style="margin-top:24px;">③ 您对交互过程的感受</h2>`;
+      SurveyData.pleasure.forEach((item, idx) => {
+        html += renderScale(item, `pleasure_${idx+1}`);
+      });
 
-    // ---- 感知价值 ----
-    html += `<h2 style="margin-top:24px;">④ 您对 AI 服务价值的评估</h2>`;
-    SurveyData.value.forEach((item, idx) => {
-      html += renderScale(item, `value_${idx+1}`);
-    });
+      // ---- 努力 ----
+      SurveyData.effort.forEach((item, idx) => {
+        html += renderScale(item, `effort_${idx+1}`);
+      });
 
-    // ---- 支付意愿（滑块） ----
-    const ws = SurveyData.wtpSlider;
-    html += `<h2 style="margin-top:24px;">⑤ 您的支付意愿</h2>`;
-    html += `<div class="card"><div class="scale-question">${ws.q}</div><div class="slider-wrap"><input type="range" class="slider-input" id="${ws.id}" min="${ws.min}" max="30" value="0" oninput="updateSlider()"><div class="slider-labels"><span>${ws.min} ${ws.unit}</span><span>${ws.max} ${ws.unit}</span></div><div class="slider-value" id="${ws.id}_v">未选择</div></div></div>`;
+      // ---- 感知价值 ----
+      html += `<h2 style="margin-top:24px;">④ 您对 AI 服务价值的评估</h2>`;
+      SurveyData.value.forEach((item, idx) => {
+        html += renderScale(item, `value_${idx+1}`);
+      });
 
-    // ---- 支付意愿（量表） ----
-    SurveyData.wtp.forEach((item, idx) => {
-      html += renderScale(item, `wtp_${idx+1}`);
-    });
+      // ---- 支付意愿（滑块） ----
+      const ws = SurveyData.wtpSlider;
+      html += `<h2 style="margin-top:24px;">⑤ 您的支付意愿</h2>`;
+      html += `<div class="card"><div class="scale-question">${ws.q}</div><div class="slider-wrap"><input type="range" class="slider-input" id="${ws.id}" min="${ws.min}" max="30" value="0" oninput="updateSlider()"><div class="slider-labels"><span>${ws.min} ${ws.unit}</span><span>${ws.max} ${ws.unit}</span></div><div class="slider-value" id="${ws.id}_v">未选择</div></div></div>`;
 
-    form.innerHTML = html;
+      // ---- 支付意愿（量表） ----
+      SurveyData.wtp.forEach((item, idx) => {
+        html += renderScale(item, `wtp_${idx+1}`);
+      });
 
-    function renderScale(item, name) {
-      let opts = '<div class="scale-options">';
-      for (let i=1; i<=7; i++) {
-        opts += `<div class="scale-option"><input type="radio" name="${name}" id="${name}_${i}" value="${i}"><label for="${name}_${i}">${i}</label></div>`;
+      form.innerHTML = html;
+
+      function renderScale(item, name) {
+        let opts = '<div class="scale-options">';
+        for (let i=1; i<=7; i++) {
+          opts += `<div class="scale-option"><input type="radio" name="${name}" id="${name}_${i}" value="${i}"><label for="${name}_${i}">${i}</label></div>`;
+        }
+        opts += '</div>';
+        return `<div class="card"><div class="scale-question">${item.q}</div><div class="scale-labels"><span>${item.left}</span><span>${item.right}</span></div>${opts}</div>`;
       }
-      opts += '</div>';
-      return `<div class="card"><div class="scale-question">${item.q}</div><div class="scale-labels"><span>${item.left}</span><span>${item.right}</span></div>${opts}</div>`;
-    }
 
-    let sliderTouched = false;
-    function updateSlider() {
-      const v = document.getElementById('wtp_slider').value;
-      document.getElementById('wtp_slider_v').textContent = `${v} 元`;
-      sliderTouched = true;
-      checkComplete();
-    }
+      let sliderTouched = false;
+      window.updateSlider = function() {
+        const v = document.getElementById('wtp_slider').value;
+        document.getElementById('wtp_slider_v').textContent = `${v} 元`;
+        sliderTouched = true;
+        checkComplete();
+      };
 
-    function checkComplete() {
-      // 所有量表题
-      const allScales = [
-        'attention_check',
-        ...SurveyData.styleMC.map((_,i)=>`style_mc_${i+1}`),
-        ...SurveyData.pleasure.map((_,i)=>`pleasure_${i+1}`),
-        ...SurveyData.effort.map((_,i)=>`effort_${i+1}`),
-        ...SurveyData.value.map((_,i)=>`value_${i+1}`),
-        ...SurveyData.wtp.map((_,i)=>`wtp_${i+1}`)
-      ];
-      const allFilled = allScales.every(n => document.querySelector(`input[name="${n}"]:checked`));
-      document.getElementById('nextBtn').disabled = !(allFilled && sliderTouched);
+      window.checkComplete = function() {
+        const allScales = [
+          'attention_check',
+          ...SurveyData.styleMC.map((_,i)=>`style_mc_${i+1}`),
+          ...SurveyData.pleasure.map((_,i)=>`pleasure_${i+1}`),
+          ...SurveyData.effort.map((_,i)=>`effort_${i+1}`),
+          ...SurveyData.value.map((_,i)=>`value_${i+1}`),
+          ...SurveyData.wtp.map((_,i)=>`wtp_${i+1}`)
+        ];
+        const allFilled = allScales.every(n => document.querySelector(`input[name="${n}"]:checked`));
+        document.getElementById('nextBtn').disabled = !(allFilled && sliderTouched);
+      };
+      form.addEventListener('change', window.checkComplete);
     }
-    form.addEventListener('change', checkComplete);
 
     async function submitSurvey() {
+      const aiType = State.getCurrentAi();
       const data = { ai_type: aiType };
       data.attention_check = parseInt(document.querySelector('input[name="attention_check"]:checked').value);
       SurveyData.styleMC.forEach((_,i) => data[`style_mc_${i+1}`] = parseInt(document.querySelector(`input[name="style_mc_${i+1}"]:checked`).value));
@@ -124,10 +135,13 @@
 
       State.saveSurvey(aiType, data);
 
+      // 离开时设置 phase
+      const surveyPhase = (State.get('current_ai_index') || 0) === 0 ? 'survey_1' : 'survey_2';
+
       // 进入下一阶段
       State.nextAi();
       if (State.hasMoreAi()) {
-        // 下一个AI
+        State.setPhase(surveyPhase);
         navigate('chat.html');
       } else {
         // 全部完成 → 提交
