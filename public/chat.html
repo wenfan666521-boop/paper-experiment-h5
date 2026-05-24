@@ -14,7 +14,19 @@
         <div class="chat-name" id="aiName"></div>
         <div class="chat-status" id="aiSub"></div>
       </div>
+      <button class="goal-btn" id="goalBtn" onclick="showGoal()" title="查看任务目标">🎯</button>
       <div class="chat-rounds" id="rounds">0 / 5 轮</div>
+    </div>
+
+    <!-- 目标弹窗 -->
+    <div class="modal-overlay" id="goalModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span>🎯 您的任务目标</span>
+          <button class="modal-close" onclick="hideGoal()">×</button>
+        </div>
+        <div class="modal-body" id="goalContent"></div>
+      </div>
     </div>
 
     <div class="chat-body" id="chatBody"></div>
@@ -97,6 +109,8 @@
         }
       });
 
+      document.getElementById('goalBtn').onclick = showGoal;
+
       document.getElementById('finishBtn').onclick = () => {
         State.set(`chat_${aiType}_messages`, window._messages);
         State.set(`chat_${aiType}_turns`, window._userTurns);
@@ -162,6 +176,18 @@
       const el = document.getElementById('loadingMsg');
       if (el) el.remove();
     }
+
+    window.showGoal = function() {
+      const sc = Scenarios[State.get('scenario')];
+      document.getElementById('goalContent').innerHTML = sc.content;
+      document.getElementById('goalModal').style.display = 'flex';
+    };
+    window.hideGoal = function() {
+      document.getElementById('goalModal').style.display = 'none';
+    };
+    document.getElementById('goalModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('goalModal')) hideGoal();
+    });
 
     function updateRounds(body, userTurns) {
       const display = Math.min(userTurns, MIN_ROUNDS);
