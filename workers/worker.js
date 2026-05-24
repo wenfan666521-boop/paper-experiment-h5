@@ -10,13 +10,28 @@ function jsonResp(status, body) {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
+// ========== 格式化多轮对话历史为 prompt 字符串 ==========
+// 百炼 App API 的 input.prompt 是单字符串字段，需要显式加上角色标记
+function formatHistoryPrompt(messages) {
+  return messages.map(m => {
+    if (m.role === 'user') {
+      return '「用户」：' + m.content;
+    } else if (m.role === 'assistant') {
+      return '「助手」：' + m.content;
+    } else {
+      return m.content;
+    }
+  }).join('\n');
+}
+
 // ========== 百炼应用级 API ==========
-async function bailianChat(appId, apiKey, history, temperature) {
+async function bailianChat(appId, apiKey, messages, temperature) {
+  const prompt = formatHistoryPrompt(messages);
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      input: { prompt: history },
+      input: { prompt: prompt },
       parameters: { stream: false, temperature, max_tokens: 800 }
     })
   });
@@ -38,9 +53,10 @@ async function handleChat(request, env) {
   const apiKey = aiType === 'exp' ? env.BAILIAN_API_KEY_EXP : env.BAILIAN_API_KEY_UTIL;
   if (!appId || !apiKey) return jsonResp(500, { error: 'credentials not configured' });
 
-  const history = messages.slice(-20).map(m => m.content).join('\n');
+  // 保留完整消息对象（含 role），供 formatHistoryPrompt 生成带角色标记的 prompt
+  const chatMessages = messages.slice(-20);
   try {
-    const reply = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3);
+    const reply = await bailianChat(appId, apiKey, chatMessages, aiType === 'exp' ? 0.9 : 0.3);
     return jsonResp(200, { message: reply });
   } catch (e) {
     return jsonResp(500, { error: e.message });
