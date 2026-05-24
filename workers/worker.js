@@ -10,27 +10,62 @@ function jsonResp(status, body) {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
-// ========== 百炼应用级 API ==========
+// ========== 百炼应用级 API（SSE 流式解析） ==========
 async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null) {
   const body = {
     input: { prompt },
-    parameters: { temperature, max_tokens: 800 }
+    parameters: { temperature, max_tokens: 800, stream: true }
   };
   if (sessionId) body.session_id = sessionId;
+
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + apiKey,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-DashScope-SSE': 'enable'
     },
     body: JSON.stringify(body)
   });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error?.message || 'Bailian API error');
-  return {
-    text: d.output?.text || d.output?.content || '抱歉，暂时无法回复。',
-    sessionId: d.session_id || null
-  };
+
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error(d.error?.message || 'Bailian API error: ' + r.status);
+  }
+
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let respSessionId = sessionId;
+
+  try {
+    while (true) {
+      const { done, chunk } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(chunk, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const data = line.slice(5).trim();
+          if (data && data !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.output?.session_id) respSessionId = parsed.output.session_id;
+              const text = parsed.output?.text || parsed.output?.content || '';
+              if (text) fullText += text;
+            } catch (_) {}
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!fullText) throw new Error('Empty response from Bailian');
+  return { text: fullText, sessionId: respSessionId };
 }
 
 // ========== Chat ==========
