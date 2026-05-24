@@ -13,14 +13,77 @@ function jsonResp(status, body) {
 // CSV BOM 标记，解决 Excel 中文乱码
 const CSV_BOM = '\uFEFF';
 
-// ========== 百炼应用级 API ==========
-async function bailianChat(appId, apiKey, history, temperature) {
+// ========== 百炼应用级 API（支持多轮对话 + SSE流式） ==========
+async function* bailianChatStream(appId, apiKey, messages, temperature) {
+  const history = messages.map(m => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: m.content
+  }));
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'X-DashScope-SSE': 'enable'
+    },
     body: JSON.stringify({
-      input: { prompt: history },
-      parameters: { stream: false, temperature, max_tokens: 800 }
+      input: { messages: history },
+      parameters: { temperature, max_tokens: 800, stream: true }
+    })
+  });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error(d.error?.message || 'Bailian API error: ' + r.status);
+  }
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  try {
+    while (true) {
+      const { done, chunk } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(chunk, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const data = line.slice(5).trim();
+          if (data && data !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(data);
+              const text = parsed.output?.text || parsed.output?.content || '';
+              if (text) {
+                fullText += text;
+                yield text;
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  if (!fullText) throw new Error('Empty response from Bailian');
+  return fullText;
+}
+
+// 非流式版本（备用）
+async function bailianChat(appId, apiKey, messages, temperature) {
+  const history = messages.map(m => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: m.content
+  }));
+  const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      input: { messages: history },
+      parameters: { temperature, max_tokens: 800 }
     })
   });
   const d = await r.json();
@@ -41,7 +104,7 @@ async function handleChat(request, env) {
   const apiKey = aiType === 'exp' ? env.BAILIAN_API_KEY_EXP : env.BAILIAN_API_KEY_UTIL;
   if (!appId || !apiKey) return jsonResp(500, { error: 'credentials not configured' });
 
-  const history = messages.slice(-20).map(m => m.content).join('\n');
+  const history = messages.slice(-20);
   try {
     const reply = await bailianChat(appId, apiKey, history, aiType === 'exp' ? 0.9 : 0.3);
     return jsonResp(200, { message: reply });
