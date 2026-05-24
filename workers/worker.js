@@ -12,15 +12,18 @@ function jsonResp(status, body) {
 
 // ========== 百炼应用级 API ==========
 async function bailianChat(appId, apiKey, prompt, temperature, sessionId = null) {
-  const input = { prompt };
-  if (sessionId) input.session_id = sessionId;
+  const body = {
+    input: { prompt },
+    parameters: { temperature, max_tokens: 800 }
+  };
+  if (sessionId) body.session_id = sessionId;
   const r = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + apiKey,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ input, parameters: { temperature, max_tokens: 800 } })
+    body: JSON.stringify(body)
   });
   const d = await r.json();
   if (!r.ok) throw new Error(d.error?.message || 'Bailian API error');
