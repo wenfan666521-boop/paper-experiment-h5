@@ -142,7 +142,7 @@
       State.nextAi();
       if (State.hasMoreAi()) {
         State.setPhase(surveyPhase);
-        navigate('chat.html');
+        navigate('transition.html');
       } else {
         // 全部完成 → 提交
         await finalSubmit();

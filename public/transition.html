@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>继续下一个任务</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="container page">
+    <div class="progress"><div class="progress-bar" id="progBar"></div></div>
+
+    <div style="text-align:center;padding:40px 20px 30px;">
+      <div style="font-size:60px;margin-bottom:20px;" id="emoji">🌟</div>
+      <h1 style="font-size:24px;line-height:1.4;margin-bottom:12px;" id="title">即将开始第二个任务</h1>
+      <p style="color:#6b7280;margin-top:8px;" id="subtitle"></p>
+    </div>
+
+    <div class="card" style="background:#f0fdf4;border-color:#bbf7d0;margin-top:24px;">
+      <h3 style="margin-top:0;color:#166534;margin-bottom:12px;">💡 提示</h3>
+      <ul style="color:#166534;line-height:1.8;padding-left:20px;font-size:14px;">
+        <li>接下来的任务场景<span id="scenarioHint"></span>相同</li>
+        <li>但你将面对的是<strong>另一位 AI 助手</strong></li>
+        <li>请像对待第一位助手一样，认真完成旅行规划任务</li>
+        <li>两位助手服务风格不同，<strong>无需比较</strong>，按真实感受回答即可</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:32px;" id="aiAvatar">🌟</div>
+        <div>
+          <div style="font-weight:700;font-size:16px;" id="aiName">星程</div>
+          <div style="color:#6b7280;font-size:13px;" id="aiSub">旅行小助手</div>
+        </div>
+        <div style="margin-left:auto;color:#d97706;font-size:13px;font-weight:600;" id="orderTag">1/2 已完成</div>
+      </div>
+    </div>
+
+    <div class="btn-bar">
+      <button class="btn btn-block" id="startBtn">继续任务 →</button>
+    </div>
+  </div>
+
+  <script src="assets/state.js"></script>
+  <script src="assets/scenarios.js"></script>
+  <script>
+    // 校验 phase：必须从 survey_1 或 survey_2 跳入
+    const neededPhase = State.get('current_ai_index') === 1 ? 'survey_1' : 'survey_2';
+    if (!State.validatePhase(neededPhase)) {
+      // 会自动重置并跳转
+    } else {
+      initTransition();
+    }
+
+    function initTransition() {
+      const aiType = State.getCurrentAi(); // 第二个AI
+      const aiInfo = AiInfo[aiType];
+      const isExp = aiType === 'exp';
+
+      document.getElementById('emoji').textContent = aiInfo.avatar;
+      document.getElementById('aiAvatar').textContent = aiInfo.avatar;
+      document.getElementById('aiName').textContent = aiInfo.name;
+      document.getElementById('aiSub').textContent = aiInfo.subtitle;
+      document.getElementById('orderTag').textContent = '1/2 已完成 ✓';
+
+      const scenarioName = State.get('scenario') === 'exp' ? '「家庭度假规划」' : '「紧急商务出差」';
+      document.getElementById('scenarioHint').textContent = scenarioName;
+
+      if (isExp) {
+        document.getElementById('title').textContent = '即将体验另一位 AI 助手 🌟';
+        document.getElementById('subtitle').textContent = '这位助手风格不同，请尝试与他沟通，看看能否帮你完成旅行规划';
+      } else {
+        document.getElementById('title').textContent = '即将体验另一位 AI 助手 ✈️';
+        document.getElementById('subtitle').textContent = '这位助手风格简洁直接，请按要求提供信息，完成出行预订';
+      }
+
+      document.getElementById('progBar').style.width = '65%';
+
+      document.getElementById('startBtn').onclick = () => {
+        State.setPhase('transition');
+        navigate('chat.html');
+      };
+    }
+  </script>
+</body>
+</html>

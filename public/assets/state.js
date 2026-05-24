@@ -7,6 +7,7 @@ const PHASE_ORDER = [
   'scenario_mc',    // 4: 场景操控检验完成
   'chat_1',         // 5: 第1个AI对话完成
   'survey_1',       // 6: 第1个AI评价完成
+  'transition',     // 6.5: 两次实验之间的引导页
   'chat_2',         // 7: 第2个AI对话完成
   'survey_2',       // 8: 第2个AI评价完成 → 最终提交
 ];
