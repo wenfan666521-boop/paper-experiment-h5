@@ -14,7 +14,7 @@
         <div class="chat-name" id="aiName"></div>
         <div class="chat-status" id="aiSub"></div>
       </div>
-      <button class="goal-btn" id="goalBtn" onclick="showGoal()" title="查看任务目标">🎯</button>
+      <button class="goal-btn" id="goalBtn" title="查看任务目标">🎯</button>
       <div class="chat-rounds" id="rounds">0 / 5 轮</div>
     </div>
 
@@ -23,7 +23,7 @@
       <div class="modal-box">
         <div class="modal-header">
           <span>🎯 您的任务目标</span>
-          <button class="modal-close" onclick="hideGoal()">×</button>
+          <button class="modal-close" id="modalCloseBtn">×</button>
         </div>
         <div class="modal-body" id="goalContent"></div>
       </div>
@@ -109,7 +109,8 @@
         }
       });
 
-      document.getElementById('goalBtn').onclick = showGoal;
+      document.getElementById('goalBtn').onclick = window.showGoal;
+      document.getElementById('modalCloseBtn').onclick = window.hideGoal;
 
       document.getElementById('finishBtn').onclick = () => {
         State.set(`chat_${aiType}_messages`, window._messages);
@@ -186,7 +187,7 @@
       document.getElementById('goalModal').style.display = 'none';
     };
     document.getElementById('goalModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('goalModal')) hideGoal();
+      if (e.target === document.getElementById('goalModal')) window.hideGoal();
     });
 
     function updateRounds(body, userTurns) {
