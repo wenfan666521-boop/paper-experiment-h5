@@ -15,7 +15,7 @@
         <div class="chat-status" id="aiSub"></div>
       </div>
       <button class="goal-btn" id="goalBtn" title="查看任务目标" onclick="window.showGoal && window.showGoal()">任务目标</button>
-      <div class="chat-rounds" id="rounds">0 / 5 轮</div>
+      <div class="chat-rounds" id="rounds">0 / 6 轮</div>
     </div>
 
     <!-- 目标弹窗 -->
@@ -181,7 +181,17 @@
 
     window.showGoal = function() {
       const sc = Scenarios[State.get('scenario')];
-      document.getElementById('goalContent').innerHTML = sc.content;
+      const aiType = State.getCurrentAi();
+      const rounds = window._userTurns || 0;
+      const planHint = window._hasPlanTriggered
+        ? '✅ 已触发出行方案'
+        : '⏳ 需要触发出行方案';
+      const progressHtml = `<div style="margin-top:12px;padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:14px;color:#1e40af;line-height:1.6;">
+        <b>完成进度</b><br>
+        对话轮数：${rounds} / 6 轮<br>
+        ${planHint}
+      </div>`;
+      document.getElementById('goalContent').innerHTML = sc.content + progressHtml;
       document.getElementById('goalModal').style.display = 'flex';
     };
     window.hideGoal = function() {
@@ -193,8 +203,7 @@
 
     function updateRounds(body, userTurns) {
       const displayRounds = Math.min(userTurns, MIN_ROUNDS);
-      const planHint = window._hasPlanTriggered ? '✅ 已触发出行方案' : '⏳ 还需触发出行方案';
-      document.getElementById('rounds').textContent = `${displayRounds} / ${MIN_ROUNDS} 轮 | ${planHint}`;
+      document.getElementById('rounds').textContent = `${displayRounds} / ${MIN_ROUNDS} 轮`;
       if (userTurns >= MIN_ROUNDS) {
         document.getElementById('rounds').classList.add('done');
         if (window._hasPlanTriggered) {
