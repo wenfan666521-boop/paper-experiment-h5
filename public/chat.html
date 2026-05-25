@@ -45,7 +45,7 @@
   <script src="assets/scenarios.js"></script>
   <script src="assets/api.js"></script>
   <script>
-    const MIN_ROUNDS = 5;
+    const MIN_ROUNDS = 6;
 
     // 进入时 phase 校验：必须从正确的上一步来
     const aiIdx = State.get('current_ai_index') || 0;
@@ -72,6 +72,7 @@
       window._messages = [];
       window._userTurns = 0;
       window._isWaiting = false;
+      window._hasPlanTriggered = false;
 
       const body = document.getElementById('chatBody');
       const input = document.getElementById('msgInput');
@@ -144,6 +145,7 @@
         removeLoading(body);
         addMsg(body, 'assistant', reply);
         window._messages.push({ role: 'assistant', content: reply });
+        if (reply.includes('出行方案')) window._hasPlanTriggered = true;
         API.logMessage(subjectId, aiType, window._userTurns, 'assistant', reply, Date.now() - t0);
       } catch (e) {
         removeLoading(body);
@@ -190,11 +192,14 @@
     });
 
     function updateRounds(body, userTurns) {
-      const display = Math.min(userTurns, MIN_ROUNDS);
-      document.getElementById('rounds').textContent = `${display} / ${MIN_ROUNDS} 轮`;
+      const displayRounds = Math.min(userTurns, MIN_ROUNDS);
+      const planHint = window._hasPlanTriggered ? '✅ 已触发出行方案' : '⏳ 还需触发出行方案';
+      document.getElementById('rounds').textContent = `${displayRounds} / ${MIN_ROUNDS} 轮 | ${planHint}`;
       if (userTurns >= MIN_ROUNDS) {
         document.getElementById('rounds').classList.add('done');
-        document.getElementById('finishBar').style.display = 'block';
+        if (window._hasPlanTriggered) {
+          document.getElementById('finishBar').style.display = 'block';
+        }
       }
     }
   </script>

@@ -13,9 +13,7 @@ const Scenarios = {
       <li>挑一家你们全家都会喜欢的酒店</li>
       <li>决定去程和返程方式怎么去</li>
       <li>拿到一份完整的出行方案</li>
-    </ol>
-    <h3>💭 你现在的心情</h3>
-    <p style="background:#fef3c7;padding:12px;border-radius:8px;color:#92400e;">"这次旅行对我来说挺重要的，不想随便定。希望AI能听懂我想要什么，最好能给我一些<b>我自己没想到</b>的好建议。预算不是最重要的——<b>对的感觉</b>才是。"</p>`
+    </ol>`
   },
   util: {
     title: '⏰ 紧急商务出差',
@@ -30,9 +28,7 @@ const Scenarios = {
       <li>订一家近会场（国贸CBD附近）的酒店（当晚住一晚）</li>
       <li>订一张后天下午从北京回上海的机票</li>
       <li>拿到完整的订单确认信息（机票号、酒店地址、总价）</li>
-    </ol>
-    <h3>💭 你现在的心情</h3>
-    <p style="background:#dbeafe;padding:12px;border-radius:8px;color:#1e40af;">"我没时间聊天，<b>越快越好</b>。希望AI<b>别问我太多废话</b>，最好直接给我可选方案让我快速决定。<b>别用花里胡哨的话</b>——我只想要清晰的信息和准确的时间表。"</p>`
+    </ol>`
   }
 };
 
