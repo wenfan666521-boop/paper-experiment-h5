@@ -1,6 +1,6 @@
 // API 调用封装
 const API = {
-  BASE: 'https://8.138.29.217:8443',
+  BASE: 'https://api.aowuaowu2026.xyz',
   MOCK: window.location.search.includes('mock=1'),
 
   // 会话状态：每个 aiType 维护自己的 sessionId
