@@ -1,4 +1,4 @@
-// API 调用封装 - 路线A：AI对话直连百炼，数据存储走服务器
+// API 调用封装 - 全部本地化：AI对话直连百炼，数据存localStorage，被试自行导出
 const API = {
   // ======= 百炼AI直连配置 =======
   BAILIAN: {
@@ -8,9 +8,14 @@ const API = {
     endpoint: 'https://dashscope.aliyuncs.com/api/v1/apps/'
   },
 
-  // 数据存储服务（HTTP）
-  DATA_SERVER: 'http://8.138.29.217:8080',
-  MOCK: window.location.search.includes('mock=1'),
+  // ======= localStorage 数据存储 =======
+  _getStore(aiType) {
+    const key = 'paper_exp_' + aiType;
+    return JSON.parse(localStorage.getItem(key) || '{"chatLogs":[],"survey":null}');
+  },
+  _setStore(aiType, data) {
+    localStorage.setItem('paper_exp_' + aiType, JSON.stringify(data));
+  },
 
   // ======= AI对话（直连百炼） =======
   async chat(aiType, messages, subjectId) {
@@ -19,7 +24,6 @@ const API = {
     const appId = aiType === 'exp' ? this.BAILIAN.appIdExp : this.BAILIAN.appIdUtil;
     const temperature = aiType === 'exp' ? 0.9 : 0.3;
 
-    // 构造 prompt（与 server.js 格式一致）
     const prompt = messages.map(m => {
       if (m.role === 'user') return '「用户」：' + m.content;
       if (m.role === 'assistant') return '「助手」：' + m.content;
@@ -52,30 +56,59 @@ const API = {
     }
   },
 
-  // ======= 对话日志（存服务器SQLite） =======
+  // ======= 对话日志（存localStorage） =======
   async logMessage(subjectId, aiType, turn, role, content, responseTimeMs = null) {
     if (this.MOCK) { console.log('[MOCK logMessage]', { subjectId, aiType, turn, role, content }); return; }
     try {
-      await fetch(this.DATA_SERVER + '/log-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subjectId, aiType, turn, role, content, responseTimeMs })
+      const store = this._getStore(aiType);
+      store.chatLogs.push({
+        subjectId, turn, role, content, responseTimeMs,
+        ts: new Date().toISOString()
       });
+      this._setStore(aiType, store);
     } catch (e) { console.warn('log failed', e); }
   },
 
-  // ======= 提交量表（存服务器SQLite） =======
+  // ======= 提交量表（存localStorage） =======
   async submitSurvey(payload) {
     if (this.MOCK) {
       console.log('[MOCK submitSurvey]', payload);
       return { ok: true, taskCode: 'MOCK_' + Math.random().toString(36).slice(2,7).toUpperCase() };
     }
-    const res = await fetch(this.DATA_SERVER + '/submit-survey', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return res.json();
+    try {
+      const store = this._getStore(payload.aiType || 'exp');
+      store.survey = { ...payload, submittedAt: new Date().toISOString() };
+      this._setStore(payload.aiType || 'exp', store);
+      return { ok: true, taskCode: 'LOCAL_' + Math.random().toString(36).slice(2,7).toUpperCase() };
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  },
+
+  // ======= 数据导出（被试手动触发） =======
+  exportData(aiType) {
+    const store = this._getStore(aiType);
+    const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'experiment_data_' + aiType + '_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // 导出全部数据（两个AI的数据）
+  exportAllData() {
+    const exp = this._getStore('exp');
+    const util = this._getStore('util');
+    const all = { exp, util, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'experiment_data_all_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
   },
 
   // ======= Mock模式 =======
