@@ -93,7 +93,7 @@
       setTimeout(async () => {
         removeLoading(body);
         const greeting = aiType === 'exp'
-          ? '嗨～我是星程 🌟 很高兴认识你！跟我说说你想去哪、什么时候出发呀？😊'
+          ? '我是星程 🌟 很高兴认识你！是你的贴心小助手，可以帮你快速订机票订酒店，确定行程~'
           : '您好，我是您的出行助手，可以引导您快速订机票订酒店，确定差旅行程。有任何问题，请按照提示进行回复';
         addMsg(body, 'assistant', greeting);
         window._messages.push({ role: 'assistant', content: greeting });
