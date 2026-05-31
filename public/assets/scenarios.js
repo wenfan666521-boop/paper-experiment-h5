@@ -33,6 +33,6 @@ const Scenarios = {
 };
 
 const AiInfo = {
-  exp: { name: '星程', avatar: '🌟', subtitle: '旅行小助手' },
+  exp: { name: '星程', avatar: 'assets/xingcheng-avatar.png', subtitle: '旅行小助手' },
   util: { name: '出行助手', avatar: '✈️', subtitle: '高效预订系统' }
 };

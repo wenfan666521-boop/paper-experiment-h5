@@ -63,8 +63,13 @@
       const scenarioInfo = Scenarios[State.get('scenario')];
 
       // 初始化UI
-      document.getElementById('avatar').className = `chat-avatar ${aiType}`;
-      document.getElementById('avatar').textContent = aiInfo.avatar;
+      const avatarEl = document.getElementById('avatar');
+      avatarEl.className = `chat-avatar ${aiType}`;
+      if (aiInfo.avatar.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
+        avatarEl.innerHTML = `<img src="${aiInfo.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">`;
+      } else {
+        avatarEl.textContent = aiInfo.avatar;
+      }
       document.getElementById('aiName').textContent = aiInfo.name;
       document.getElementById('aiSub').textContent = aiInfo.subtitle;
 

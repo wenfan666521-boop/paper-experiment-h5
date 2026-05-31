@@ -58,8 +58,16 @@
       const aiInfo = AiInfo[aiType];
       const isExp = aiType === 'exp';
 
-      document.getElementById('emoji').textContent = aiInfo.avatar;
-      document.getElementById('aiAvatar').textContent = aiInfo.avatar;
+      function setAvatar(id, avatar, size) {
+        const el = document.getElementById(id);
+        if (avatar.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
+          el.innerHTML = `<img src="${avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;" alt="">`;
+        } else {
+          el.textContent = avatar;
+        }
+      }
+      setAvatar('emoji', aiInfo.avatar, 60);
+      setAvatar('aiAvatar', aiInfo.avatar, 32);
       document.getElementById('aiName').textContent = aiInfo.name;
       document.getElementById('aiSub').textContent = aiInfo.subtitle;
       document.getElementById('orderTag').textContent = '1/2 已完成 ✓';
