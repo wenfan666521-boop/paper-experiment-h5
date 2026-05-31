@@ -24,17 +24,9 @@
     <div class="card" style="margin:24px 0;text-align:left;background:#fff7ed;border:1px solid #fb923c;">
       <h3 style="margin-top:0;color:#9a3412;">📦 导出实验数据</h3>
       <p style="color:#9a3412;font-size:14px;margin-bottom:16px;">请点击下方按钮，将您的实验数据保存为文件，并发送给实验人员。</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="API.exportAllData()" class="btn btn-block" style="flex:1;background:#ea580c;font-size:15px;padding:14px 20px;">
-          📥 导出全部数据（推荐）
-        </button>
-        <button onclick="API.exportData('exp')" class="btn btn-outline" style="flex:1;font-size:14px;">
-          🌟 体验AI数据
-        </button>
-        <button onclick="API.exportData('util')" class="btn btn-outline" style="flex:1;font-size:14px;">
-          ✈️ 功利AI数据
-        </button>
-      </div>
+      <button onclick="API.exportAllData()" class="btn btn-block" style="background:#ea580c;font-size:15px;padding:14px 20px;">
+        📥 导出全部数据
+      </button>
       <p style="color:#6b7280;font-size:12px;margin-top:12px;margin-bottom:0;">📁 文件格式：JSON，包含对话记录和量表数据</p>
     </div>
   </div>
