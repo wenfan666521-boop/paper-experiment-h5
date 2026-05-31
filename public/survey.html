@@ -81,7 +81,7 @@
       // ---- 支付意愿（滑块） ----
       const ws = SurveyData.wtpSlider;
       html += `<h2 style="margin-top:24px;">⑤ 您的支付意愿</h2>`;
-      html += `<div class="card"><div class="scale-question">${ws.q}</div><div class="slider-wrap"><input type="range" class="slider-input" id="${ws.id}" min="${ws.min}" max="30" value="0" oninput="updateSlider()"><div class="slider-labels"><span>${ws.min} ${ws.unit}</span><span>${ws.max} ${ws.unit}</span></div><div class="slider-value" id="${ws.id}_v">未选择</div></div></div>`;
+      html += `<div class="card"><div class="scale-question">${ws.q}</div><div class="slider-wrap"><input type="range" class="slider-input" id="${ws.id}" min="${ws.min}" max="30" value="15" oninput="updateSlider()"><div class="slider-labels"><span>${ws.min} ${ws.unit}</span><span>${ws.max} ${ws.unit}</span></div><div class="slider-value" id="${ws.id}_v">15 元</div></div></div>`;
 
       // ---- 支付意愿（量表） ----
       SurveyData.wtp.forEach((item, idx) => {
