@@ -29,10 +29,10 @@
       <p>• 完成后获得任务码用于平台兑换报酬</p>
     </div>
 
-    <div class="radio-item" onclick="toggleConsent()" id="consentBox" style="margin-top:20px;">
-      <input type="checkbox" id="consent">
+    <label class="radio-item" id="consentBox" style="margin-top:20px;cursor:pointer;">
+      <input type="checkbox" id="consent" onchange="onConsentChange()">
       <span>我已阅读并理解上述内容，<b>自愿参与</b>本研究</span>
-    </div>
+    </label>
 
     <div class="btn-bar">
       <button class="btn btn-block" id="nextBtn" disabled onclick="goNext()">继续 →</button>
@@ -41,16 +41,14 @@
 
   <script src="assets/state.js"></script>
   <script>
-    function toggleConsent() {
-      const cb = document.getElementById('consent');
-      cb.checked = !cb.checked;
-      document.getElementById('consentBox').classList.toggle('checked', cb.checked);
-      document.getElementById('nextBtn').disabled = !cb.checked;
+    function onConsentChange() {
+      const checked = document.getElementById('consent').checked;
+      document.getElementById('consentBox').classList.toggle('checked', checked);
+      document.getElementById('nextBtn').disabled = !checked;
     }
 
     function goNext() {
-      const cb = document.getElementById('consent');
-      if (cb.checked) {
+      if (document.getElementById('consent').checked) {
         State.setPhase('consented');
         navigate('demographics.html');
       }
