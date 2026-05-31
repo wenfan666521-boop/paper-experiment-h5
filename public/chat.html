@@ -89,7 +89,7 @@
         removeLoading(body);
         const greeting = aiType === 'exp'
           ? '嗨～我是星程 🌟 很高兴认识你！跟我说说你想去哪、什么时候出发呀？😊'
-          : '您好。我是出行助手。\n\n步骤 1/5 · 基础信息收集\n\n请提供以下信息：\n① 出发城市\n② 目的地\n③ 出发日期\n④ 返回日期\n⑤ 出行人数';
+          : '您好，我是您的出行助手，可以引导您快速订机票订酒店，确定差旅行程。有任何问题，请按照提示进行回复';
         addMsg(body, 'assistant', greeting);
         window._messages.push({ role: 'assistant', content: greeting });
         API.logMessage(subjectId, aiType, 0, 'assistant', greeting);
