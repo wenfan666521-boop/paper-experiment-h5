@@ -154,7 +154,12 @@
         API.logMessage(subjectId, aiType, window._userTurns, 'assistant', reply, Date.now() - t0);
       } catch (e) {
         removeLoading(body);
-        addMsg(body, 'system', '⚠️ 对话出错，请重试: ' + e.message);
+        const errMsg = e.message || '';
+        if (errMsg.includes('inappropriate') || errMsg.includes('Inappropriate')) {
+          addMsg(body, 'system', '⚠️ 系统繁忙，请稍后重试或换种措辞继续提问');
+        } else {
+          addMsg(body, 'system', '⚠️ 网络出了点问题，请重试');
+        }
       } finally {
         window._isWaiting = false;
         sendBtn.disabled = false;
