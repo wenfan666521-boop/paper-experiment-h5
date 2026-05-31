@@ -23,7 +23,7 @@
       <div class="modal-box">
         <div class="modal-header">
           <span>🎯 您的任务目标</span>
-          <button class="modal-close" id="modalCloseBtn" onclick="window.hideGoal && window.hideGoal()">×</button>
+          <button class="modal-close" id="modalCloseBtn" onclick="window.hideGoal()">×</button>
         </div>
         <div class="modal-body" id="goalContent"></div>
       </div>
@@ -114,8 +114,6 @@
           sendMessage(body, input, sendBtn, aiType, subjectId);
         }
       });
-
-      document.getElementById('modalCloseBtn').onclick = window.hideGoal;
 
       document.getElementById('finishBtn').onclick = () => {
         State.set(`chat_${aiType}_messages`, window._messages);
