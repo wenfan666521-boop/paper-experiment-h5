@@ -101,7 +101,14 @@ const API = {
   exportAllData() {
     const exp = this._getStore('exp');
     const util = this._getStore('util');
-    const all = { exp, util, exportedAt: new Date().toISOString() };
+    const all = {
+      subject_id: State.get('subject_id') || 'unknown',
+      scenario: State.get('scenario') || 'unknown',
+      ai_order: State.get('ai_order') || 'unknown',
+      exp,
+      util,
+      exportedAt: new Date().toISOString()
+    };
     const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

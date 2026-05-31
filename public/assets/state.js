@@ -16,6 +16,22 @@ const State = {
   KEY: 'experiment_state',
 
   init() {
+    // 解析 URL 参数（仅首次加载时生效）
+    if (!this.get('_url_parsed')) {
+      const params = new URLSearchParams(window.location.search);
+      const urlSubject = params.get('subject');
+      const urlScenario = params.get('scenario');
+      const urlOrder = params.get('order');
+      
+      if (urlSubject) this.set('subject_id', urlSubject);
+      if (urlScenario && (urlScenario === 'exp' || urlScenario === 'util')) this.set('scenario', urlScenario);
+      if (urlOrder && (urlOrder === 'exp_first' || urlOrder === 'util_first')) {
+        this.set('ai_order', urlOrder);
+        this.set('current_ai_index', 0);
+      }
+      this.set('_url_parsed', true);
+    }
+    
     if (!this.get('subject_id')) {
       const id = 'P_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '_' + Math.random().toString(36).slice(2,8);
       this.set('subject_id', id);
@@ -88,14 +104,14 @@ const State = {
     return true;
   },
 
-  // ---- 场景随机分配 ----
+  // ---- 场景分配（URL指定优先，否则随机） ----
   assignScenario() {
     if (!this.get('scenario')) {
       this.set('scenario', Math.random() < 0.5 ? 'exp' : 'util');
     }
   },
 
-  // ---- AI顺序随机分配 ----
+  // ---- AI顺序分配（URL指定优先，否则随机） ----
   assignAiOrder() {
     if (!this.get('ai_order')) {
       this.set('ai_order', Math.random() < 0.5 ? 'exp_first' : 'util_first');
