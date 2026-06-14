@@ -40,7 +40,7 @@ const API = {
           },
           body: JSON.stringify({
             input: { prompt: prompt },
-            parameters: { stream: false, temperature: temperature, max_tokens: 800 }
+            parameters: { stream: false, temperature: temperature, max_tokens: 1600 }
           })
         }),
         new Promise((_, reject) =>
