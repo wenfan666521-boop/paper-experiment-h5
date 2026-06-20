@@ -72,10 +72,13 @@
         html += renderScale(item, `effort_${idx+1}`);
       });
 
-      // ---- 感知价值 ----
-      html += `<h2 style="margin-top:24px;">④ 您对 AI 服务价值的评估</h2>`;
-      SurveyData.value.forEach((item, idx) => {
-        html += renderScale(item, `value_${idx+1}`);
+      // ---- 感知效率与控制感 ----
+      html += `<h2 style="margin-top:24px;">④ 您对 AI 服务效率与过程控制的评价</h2>`;
+      SurveyData.efficiency.forEach((item, idx) => {
+        html += renderScale(item, `efficiency_${idx+1}`);
+      });
+      SurveyData.control.forEach((item, idx) => {
+        html += renderScale(item, `control_${idx+1}`);
       });
 
       // ---- 支付意愿（滑块） ----
@@ -113,7 +116,8 @@
           ...SurveyData.styleMC.map((_,i)=>`style_mc_${i+1}`),
           ...SurveyData.pleasure.map((_,i)=>`pleasure_${i+1}`),
           ...SurveyData.effort.map((_,i)=>`effort_${i+1}`),
-          ...SurveyData.value.map((_,i)=>`value_${i+1}`),
+          ...SurveyData.efficiency.map((_,i)=>`efficiency_${i+1}`),
+          ...SurveyData.control.map((_,i)=>`control_${i+1}`),
           ...SurveyData.wtp.map((_,i)=>`wtp_${i+1}`)
         ];
         const allFilled = allScales.every(n => document.querySelector(`input[name="${n}"]:checked`));
@@ -129,7 +133,8 @@
       SurveyData.styleMC.forEach((_,i) => data[`style_mc_${i+1}`] = parseInt(document.querySelector(`input[name="style_mc_${i+1}"]:checked`).value));
       SurveyData.pleasure.forEach((_,i) => data[`pleasure_${i+1}`] = parseInt(document.querySelector(`input[name="pleasure_${i+1}"]:checked`).value));
       SurveyData.effort.forEach((_,i) => data[`effort_${i+1}`] = parseInt(document.querySelector(`input[name="effort_${i+1}"]:checked`).value));
-      SurveyData.value.forEach((_,i) => data[`value_${i+1}`] = parseInt(document.querySelector(`input[name="value_${i+1}"]:checked`).value));
+      SurveyData.efficiency.forEach((_,i) => data[`efficiency_${i+1}`] = parseInt(document.querySelector(`input[name="efficiency_${i+1}"]:checked`).value));
+      SurveyData.control.forEach((_,i) => data[`control_${i+1}`] = parseInt(document.querySelector(`input[name="control_${i+1}"]:checked`).value));
       data.wtp_slider = parseInt(document.getElementById('wtp_slider').value);
       SurveyData.wtp.forEach((_,i) => data[`wtp_${i+1}`] = parseInt(document.querySelector(`input[name="wtp_${i+1}"]:checked`).value));
 

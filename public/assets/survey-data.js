@@ -37,10 +37,22 @@ const SurveyData = {
     { id: 'effort_3', q: '我觉得使用这个AI服务，会消耗我的时间和精力', left: '非常不同意', right: '非常同意' }
   ],
 
-  // 感知价值（2题）
-  value: [
-    { id: 'value_1', q: '该AI服务为我的出行规划带来了显著的价值提升', left: '非常不同意', right: '非常同意' },
-    { id: 'value_2', q: '该AI服务所带来的实用价值，远超其使用成本与所需付出的精力', left: '非常不同意', right: '非常同意' }
+  // 感知效率（3题）
+  // 改编自 E-S-QUAL 的 Efficiency 维度（Parasuraman, Zeithaml & Malhotra, 2005）
+  // 以及 TAM 中关于有用性/易用性的相关测量逻辑（Davis, 1989）
+  efficiency: [
+    { id: 'efficiency_1', q: '这个AI帮助我更快速地完成出行规划', left: '非常不同意', right: '非常同意' },
+    { id: 'efficiency_2', q: '这个AI减少了我搜索和比较信息所需的时间', left: '非常不同意', right: '非常同意' },
+    { id: 'efficiency_3', q: '这个AI使整个服务过程更加高效', left: '非常不同意', right: '非常同意' }
+  ],
+
+  // 感知控制感（3题）
+  // 改编自人机交互与智能系统用户交互中的 perceived control 测量逻辑，
+  // 强调用户对交互进度、选项与调整空间的控制感。
+  control: [
+    { id: 'control_1', q: '在与这个AI交互时，我能清楚知道当前任务进行到哪一步', left: '非常不同意', right: '非常同意' },
+    { id: 'control_2', q: '这个AI提供的选项让我觉得服务过程更容易掌控', left: '非常不同意', right: '非常同意' },
+    { id: 'control_3', q: '这个AI让出行规划过程变得清晰、有条理', left: '非常不同意', right: '非常同意' }
   ],
 
   // 支付意愿（4题 + 1滑块）
