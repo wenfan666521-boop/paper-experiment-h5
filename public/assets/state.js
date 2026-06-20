@@ -19,9 +19,9 @@ const State = {
     // 解析 URL 参数（仅首次加载时生效）
     if (!this.get('_url_parsed')) {
       const params = new URLSearchParams(window.location.search);
-      const urlSubject = params.get('subject');
+      const urlSubject = params.get('subject_id') || params.get('subject');
       const urlScenario = params.get('scenario');
-      const urlOrder = params.get('order');
+      const urlOrder = params.get('ai_order') || params.get('order');
       
       if (urlSubject) this.set('subject_id', urlSubject);
       if (urlScenario && (urlScenario === 'exp' || urlScenario === 'util')) this.set('scenario', urlScenario);
