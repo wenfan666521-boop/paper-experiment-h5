@@ -9,10 +9,15 @@ const SurveyData = {
 
   // 注意力检查
   attentionCheck: {
-    q: '材料阅读检查：在刚才的对话中，AI助手是否使用了 emoji 表情符号？',
+    q: '为确认您正在认真作答，请在本题选择“比较同意”。',
     options: [
-      { value: 1, label: '有使用 emoji 表情' },
-      { value: 0, label: '没有使用 emoji 表情' }
+      { value: 1, label: '非常不同意' },
+      { value: 2, label: '比较不同意' },
+      { value: 3, label: '有点不同意' },
+      { value: 4, label: '不确定' },
+      { value: 5, label: '有点同意' },
+      { value: 6, label: '比较同意' },
+      { value: 7, label: '非常同意' }
     ]
   },
 
