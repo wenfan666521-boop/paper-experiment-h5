@@ -119,6 +119,7 @@
       document.getElementById('finishBtn').onclick = () => {
         State.set(`chat_${aiType}_messages`, window._messages);
         State.set(`chat_${aiType}_turns`, window._userTurns);
+        if (API.cacheStateSnapshot) API.cacheStateSnapshot();
         // 离开时设置 phase
         const chatPhase = aiIdx === 0 ? 'chat_1' : 'chat_2';
         State.setPhase(chatPhase);
@@ -147,10 +148,17 @@
       try {
         const reply = await API.chat(aiType, window._messages, subjectId);
         removeLoading(body);
-        addMsg(body, 'assistant', reply);
-        window._messages.push({ role: 'assistant', content: reply });
-        if (reply.includes('出行方案')) window._hasPlanTriggered = true;
-        API.logMessage(subjectId, aiType, window._userTurns, 'assistant', reply, Date.now() - t0);
+        
+        // 判断是否为JSON（表单配置）
+        if (isJsonForm(reply)) {
+          const formData = JSON.parse(reply);
+          renderForm(body, formData, aiType, subjectId);
+        } else {
+          addMsg(body, 'assistant', reply);
+          window._messages.push({ role: 'assistant', content: reply });
+          if (reply.includes('出行方案')) window._hasPlanTriggered = true;
+          API.logMessage(subjectId, aiType, window._userTurns, 'assistant', reply, Date.now() - t0);
+        }
       } catch (e) {
         removeLoading(body);
         const errMsg = e.message || '';
@@ -163,6 +171,121 @@
         window._isWaiting = false;
         sendBtn.disabled = false;
         input.focus();
+      }
+    }
+
+    // 判断是否为JSON表单配置
+    function isJsonForm(text) {
+      try {
+        const data = JSON.parse(text);
+        return data.type === 'form' && data.step && data.fields;
+      } catch {
+        return false;
+      }
+    }
+
+    // 渲染表单
+    function renderForm(body, formData, aiType, subjectId) {
+      const div = document.createElement('div');
+      div.className = 'msg assistant form-msg';
+      
+      // 表单标题
+      let html = `<div class="form-title">${formData.title}</div>`;
+      html += `<div class="form-desc">${formData.description}</div>`;
+      
+      // 渲染字段
+      formData.fields.forEach(field => {
+        const required = field.required ? '<span class="required">*</span>' : '';
+        html += `<div class="form-field">`;
+        html += `<div class="form-label">${field.label}${required}</div>`;
+        
+        if (field.type === 'radio') {
+          html += `<div class="form-options">`;
+          field.options.forEach((opt, idx) => {
+            html += `<label class="form-option">`;
+            html += `<input type="radio" name="${field.id}" value="${opt.value}" ${idx === 0 ? 'checked' : ''}>`;
+            html += `<span>${opt.label}</span>`;
+            html += `</label>`;
+          });
+          html += `</div>`;
+        } else if (field.type === 'checkbox') {
+          html += `<div class="form-options">`;
+          field.options.forEach((opt, idx) => {
+            html += `<label class="form-option">`;
+            html += `<input type="checkbox" name="${field.id}" value="${opt.value}">`;
+            html += `<span>${opt.label}</span>`;
+            html += `</label>`;
+          });
+          html += `</div>`;
+        }
+        
+        html += `</div>`;
+      });
+      
+      // 提交按钮
+      html += `<button class="btn btn-block form-submit-btn" onclick="submitForm(this, '${aiType}', '${subjectId}', ${formData.step})">确认提交</button>`;
+      
+      div.innerHTML = html;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    // 提交表单
+    async function submitForm(btn, aiType, subjectId, step) {
+      const formEl = btn.parentElement;
+      const formData = {};
+      
+      // 收集表单数据
+      const radioInputs = formEl.querySelectorAll('input[type="radio"]:checked');
+      radioInputs.forEach(input => {
+        formData[input.name] = input.value;
+      });
+      
+      const checkboxInputs = formEl.querySelectorAll('input[type="checkbox"]:checked');
+      checkboxInputs.forEach(input => {
+        if (!formData[input.name]) formData[input.name] = [];
+        formData[input.name].push(input.value);
+      });
+      
+      // 禁用按钮
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+      
+      // 发送表单数据
+      const body = document.getElementById('chatBody');
+      addLoading(body);
+      
+      try {
+        const submitData = JSON.stringify({
+          type: 'form_submit',
+          step: step,
+          data: formData
+        });
+        
+        // 添加到消息历史
+        window._messages.push({ role: 'user', content: submitData });
+        window._userTurns++;
+        updateRounds(body, window._userTurns);
+        
+        // 调用AI
+        const reply = await API.chat(aiType, window._messages, subjectId);
+        removeLoading(body);
+        
+        // 判断是否为JSON（表单配置）
+        if (isJsonForm(reply)) {
+          const newFormData = JSON.parse(reply);
+          renderForm(body, newFormData, aiType, subjectId);
+        } else {
+          addMsg(body, 'assistant', reply);
+          window._messages.push({ role: 'assistant', content: reply });
+          if (reply.includes('出行方案')) window._hasPlanTriggered = true;
+          API.logMessage(subjectId, aiType, window._userTurns, 'assistant', reply, Date.now() - t0);
+        }
+      } catch (e) {
+        removeLoading(body);
+        addMsg(body, 'system', '⚠️ 提交失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '确认提交';
       }
     }
 
