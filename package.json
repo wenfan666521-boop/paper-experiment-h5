@@ -4,7 +4,12 @@
   "description": "AI交互风格论文实验H5 - 2x2混合设计",
   "scripts": {
     "dev": "vercel dev",
-    "serve": "cd public && python3 -m http.server 8000"
+    "serve": "cd public && python3 -m http.server 8000",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.94.0"
+  }
 }
